@@ -1,0 +1,143 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+  Property Tree Widget:
+    Expanded: []
+    Splitter Ratio: 0.55
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 15
+    Background Color: 35; 40; 48
+  Displays:
+  - Class: rviz_default_plugins/Grid
+    Name: Ground grid
+    Enabled: false
+    Cell Size: 1
+    Plane Cell Count: 20
+    Color: 100; 110; 125
+  - Class: rviz_default_plugins/Map
+    Name: Observed 2D map
+    Enabled: true
+    Alpha: 0.6
+    Topic:
+      Value: /map
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Depth: 1
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Live 3D LiDAR
+    Enabled: false
+    Topic:
+      Value: /livox/lidar
+      Reliability Policy: Best Effort
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Depth: 5
+    Color Transformer: AxisColor
+    Axis: Z
+    Position Transformer: XYZ
+    Style: Points
+    Size (Pixels): 2
+    Size (m): 0.02
+    Alpha: 0.65
+    Decay Time: 0
+  - Class: rviz_default_plugins/PointCloud2
+    Name: RTAB-Map 3D reconstruction
+    Enabled: true
+    Topic:
+      Value: /rtabmap/cloud_map
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Depth: 1
+    Color Transformer: RGB8
+    Position Transformer: XYZ
+    Style: Flat Squares
+    Size (Pixels): 3
+    Size (m): 0.04
+    Alpha: 1
+    Decay Time: 0
+  - Class: rviz_default_plugins/Path
+    Name: Optimized SLAM trajectory
+    Enabled: true
+    Topic:
+      Value: /slam/trajectory
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Depth: 1
+      History Policy: Keep Last
+    Color: 0; 255; 160
+    Line Style: Billboards
+    Line Width: 0.06
+    Offset:
+      X: 0
+      Y: 0
+      Z: 0.25
+    Alpha: 1.0
+  - Class: rviz_default_plugins/Odometry
+    Name: Estimated localization trajectory
+    Enabled: true
+    Topic:
+      Value: /g1_odometry_publisher/odom
+      Reliability Policy: Reliable
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Depth: 50
+    Keep: 80
+    Position Tolerance: 0.08
+    Angle Tolerance: 0.12
+    Shape: Arrow
+    Color: 0; 255; 255
+    Arrow:
+      Color: 0; 255; 255
+      Head Length: 0.1
+      Head Radius: 0.05
+      Shaft Length: 0.2
+      Shaft Radius: 0.025
+  - Class: rviz_default_plugins/Path
+    Name: Nav2 global path
+    Enabled: true
+    Topic:
+      Value: /plan
+      Reliability Policy: Reliable
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Depth: 5
+    Color: 255; 210; 30
+    Line Style: Billboards
+    Line Width: 0.06
+    Offset:
+      X: 0
+      Y: 0
+      Z: 0.2
+    Alpha: 1.0
+    Buffer: 1
+  - Class: rviz_default_plugins/TF
+    Name: Robot pose TF
+    Enabled: false
+    Show Names: false
+    Show Axes: true
+    Show Arrows: false
+    Marker Scale: 0.5
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: nav2_rviz_plugins/GoalTool
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 22
+      Pitch: 0.85
+      Yaw: 0.8
+      Focal Point:
+        X: 2
+        Y: 0
+        Z: 0
+      Target Frame: map
+Window Geometry:
+  Width: 1440
+  Height: 900

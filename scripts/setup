@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+if [[ ${1:-} == --reuse && $# == 2 ]]; then
+  python3 - "$2" <<'PY'
+import json,sys
+from pathlib import Path
+p=Path(sys.argv[1]).resolve()
+for name in ['.runtime/noble/opt/ros/jazzy/setup.bash','g1_ws/install/setup.bash','interaction_ws/install/setup.bash']:
+    if not (p/name).is_file():raise SystemExit('Missing dependency: '+str(p/name))
+Path('dependencies.local.json').write_text(json.dumps({'root':str(p)})+'\n')
+PY
+elif [[ $# != 0 ]]; then
+  echo 'Usage: scripts/setup [--reuse /path/to/prepared/dependencies]' >&2; exit 2
+fi
+scripts/core-python - <<'PY'
+import cv2,mujoco,numpy,pyroomacoustics,sherpa_onnx,rclpy
+from g1_interaction_msgs.msg import MicrophoneAudio,PersonTracks
+from identity import Speaker,Faces
+from audio_ros import DoubleWake
+Speaker();Faces();DoubleWake()
+print('Core dependencies and recognition models loaded; no personal gallery imported.')
+PY
+python3 core/build_native.py

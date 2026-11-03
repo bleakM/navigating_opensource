@@ -1,0 +1,15 @@
+# Chest/head mounts are identical to the frozen interaction camera file.
+# Only the extra face camera points 10 degrees up to retain adult faces at the
+# existing 1.35--1.95 m approach distance, including normal torso pitch.
+head:
+  parent: torso_link
+  xyz: [0.0576235, 0.01753, 0.42987]
+  rpy: [0.0, 0.8307767239493009, 0.0]
+chest:
+  parent: torso_link
+  xyz: [0.11, 0.0, 0.25]
+  rpy: [0.0, 0.3490658503988659, 0.0]
+interaction:
+  parent: torso_link
+  xyz: [0.13, 0.0, 0.4]
+  rpy: [0.0, -0.17453292519943295, 0.0]

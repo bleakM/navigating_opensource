@@ -1,0 +1,50 @@
+--- a/workspace/src/g1_bringup/launch/sim.launch.py
++++ b/workspace/src/g1_bringup/launch/sim.launch.py
+@@ -280,6 +280,14 @@
+ # --- simulator ------------------------------------------------------------------------------
+ 
+ 
++def _shutdown_on_sim_exit(event, context):
++    # Ctrl-C already emitted Shutdown. A second event runs Jazzy's ROSAdapter
++    # cleanup twice and turns an otherwise normal stop into a launch exception.
++    if context.is_shutdown:
++        return []
++    return [EmitEvent(event=Shutdown(reason="unitree_mujoco exited"))]
++
++
+ def _simulator(sim_env, headless, sim_start_delay_s):
+     actions = []
+     if headless:
+@@ -304,7 +312,7 @@
+         RegisterEventHandler(
+             OnProcessExit(
+                 target_action=sim_process,
+-                on_exit=[EmitEvent(event=Shutdown(reason="unitree_mujoco exited"))],
++                on_exit=_shutdown_on_sim_exit,
+             )
+         )
+     )
+--- a/workspace/src/g1_bringup/launch/control.launch.py
++++ b/workspace/src/g1_bringup/launch/control.launch.py
+@@ -110,6 +110,12 @@
+     )
+ 
+ 
++def _shutdown_on_control_exit(event, context):
++    if context.is_shutdown:
++        return []
++    return [EmitEvent(event=Shutdown(reason="ros2_control_node exited"))]
++
++
+ def _launch_setup(context, *args, **kwargs):
+     # A welded pelvis gives the policy observations its own actions cannot move, so it diverges.
+     pin_pelvis = LaunchConfiguration("pin_pelvis").perform(context).lower() in ("true", "1")
+@@ -122,7 +128,7 @@
+         RegisterEventHandler(
+             OnProcessExit(
+                 target_action=control_node,
+-                on_exit=[EmitEvent(event=Shutdown(reason="ros2_control_node exited"))],
++                on_exit=_shutdown_on_control_exit,
+             )
+         ),
+     ]

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+scripts/g1-runtime bash -c '
+cd /workspace/third_party/grove-g1/workspace
+export CMAKE_BUILD_PARALLEL_LEVEL=2
+colcon build --build-base /workspace/g1_ws/build --install-base /workspace/g1_ws/install \
+ --executor sequential --base-paths \
+ src/livox_ros_driver2 src/g1_description src/g1_hardware_interface src/g1_hand_interface \
+ src/g1_controllers src/g1_sensor_relay src/g1_state_estimation src/fast_lio_humanoid \
+ src/canopy/canopy_msgs src/canopy/canopy_perception src/canopy/canopy \
+ src/g1_msgs src/g1_locomotion src/g1_navigation \
+ src/nervros/ros/nervros_interfaces src/nervros/ros/nervros_watchdog src/g1_orchestration src/g1_bringup \
+ --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+'
+# Install the generated project scene after building the original bringup package.
+cp g1/scenes/g1_apartment_scene.xml g1_ws/install/g1_bringup/share/g1_bringup/mjcf/g1_apartment_scene.xml
+cp g1/config/sim_sensors_apartment.yaml g1_ws/install/g1_bringup/share/g1_bringup/config/sim_sensors_apartment.yaml

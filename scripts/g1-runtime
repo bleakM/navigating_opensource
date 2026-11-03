@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+exec env ROS_DOMAIN_ID=1 scripts/runtime env \
+  LP_NUM_THREADS=2 OPENCV_FOR_THREADS_NUM=2 \
+  MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072 \
+  RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
+  CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml \
+  GROVE_ASSETS_DIR=/workspace/third_party/grove-g1/workspace/assets \
+  bash -c 'if [[ -f /workspace/g1_ws/install/local_setup.bash ]]; then source /workspace/g1_ws/install/local_setup.bash; fi; export LD_LIBRARY_PATH=/opt/unitree_robotics/lib:${LD_LIBRARY_PATH:-}; exec "$@"' g1-runtime "$@"

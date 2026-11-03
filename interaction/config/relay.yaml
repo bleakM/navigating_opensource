@@ -1,0 +1,3 @@
+g1_sensor_relay:
+  ros__parameters:
+    cameras: [head, chest, interaction]

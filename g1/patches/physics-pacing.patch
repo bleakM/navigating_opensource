@@ -1,0 +1,102 @@
+--- a/workspace/vendor/unitree_mujoco/simulate/src/main.cc
++++ b/workspace/vendor/unitree_mujoco/simulate/src/main.cc
+@@ -441,6 +441,11 @@
+           // running
+           if (sim.run)
+           {
++            // A late external controller pauses physical time. Never keep
++            // integrating the old action while perception or DDS is delayed.
++            if (!grove_g1::step_sync::canAdvance(d->time)) {
++              continue;
++            }
+             bool stepped = false;
+ 
+             // record cpu time at start of iteration
+@@ -492,7 +497,6 @@
+             else
+             {
+               bool measured = false;
+-              mjtNum prevSim = d->time;
+ 
+               double refreshTime = simRefreshFraction / sim.refresh_rate;
+ 
+@@ -528,11 +532,10 @@
+                 mj_step(m, d);
+                 stepped = true;
+ 
+-                // break if reset
+-                if (d->time < prevSim)
+-                {
+-                  break;
+-                }
++                // The external balance policy needs a fresh observation between
++                // physics ticks. Never run a wall-time catch-up burst while it
++                // still holds the previous action; fall behind real time instead.
++                break;
+               }
+             }
+ 
+@@ -712,6 +715,7 @@
+     std::make_unique<mj::GlfwAdapter>(),
+     &cam, &opt, &pert, /* is_passive = */ false);
+ 
++  grove_g1::step_sync::physics_mutex = &sim->mtx;
+   std::thread unitree_thread(UnitreeSdk2BridgeThread, nullptr);
+ 
+   // grove-g1: sensor thread for the converged perception track. A no-op unless
+--- a/workspace/vendor/unitree_mujoco/simulate/src/unitree_sdk2_bridge.h
++++ b/workspace/vendor/unitree_mujoco/simulate/src/unitree_sdk2_bridge.h
+@@ -11,12 +11,27 @@
+ 
+ #include <algorithm>
+ #include <atomic>
++#include <cmath>
++#include <mutex>
+ #include <cstring>
+ #include <iostream>
+ #include <memory>
+ 
+ #include "param.h"
+ #include "physics_joystick.h"
++
++// Optional G1 simulation transport synchronization. Reserved LowCmd metadata
++// acknowledges the ROS control cycle; it never carries a localization pose.
++namespace grove_g1::step_sync {
++inline std::recursive_mutex* physics_mutex = nullptr;
++inline std::atomic<std::int64_t> command_tick{-1};
++inline std::atomic<std::int64_t> budget_ms{0};
++inline bool canAdvance(double time_s) {
++    const auto budget = budget_ms.load();
++    const auto tick = command_tick.load();
++    return budget <= 0 || tick < 0 || std::llround(time_s * 1000.0) - tick < budget;
++}
++}
+ 
+ #define MOTOR_SENSOR_NUM 3
+ 
+@@ -407,7 +422,25 @@
+ 
+     void run() override
+     {
++        std::unique_lock<std::recursive_mutex> physics_lock;
++        if (grove_g1::step_sync::physics_mutex) {
++            physics_lock = std::unique_lock<std::recursive_mutex>(*grove_g1::step_sync::physics_mutex);
++        }
++        std::int64_t tick = -1, budget = 0;
++        {
++            std::lock_guard<std::mutex> command_lock(lowcmd->mutex_);
++            if (lowcmd->msg_.reserve()[0] == 0x47524F56U) {
++                tick = lowcmd->msg_.reserve()[1];
++                budget = lowcmd->msg_.reserve()[2];
++            }
++        }
+         RobotBridge::run();
++        // Publish the acknowledgement only after the received command was
++        // applied under the same mutex as mj_step and the sensor snapshots.
++        if (tick >= 0 && budget > 0) {
++            grove_g1::step_sync::command_tick.store(tick);
++            grove_g1::step_sync::budget_ms.store(budget);
++        }
+ 
+         // secondary IMU state
+         if (secondary_imustate->trylock()) {

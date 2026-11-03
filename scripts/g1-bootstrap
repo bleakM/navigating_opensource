@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Install/build only inside the project rootfs. Never call host apt or sudo.
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+mkdir -p .runtime logs
+exec 9>.runtime/run.lock
+flock -n 9 || { echo 'Stop the project simulator before building its dependencies.' >&2; exit 1; }
+if [[ ${1:-} == --check ]]; then
+  python3 scripts/g1-fetch.py --verify-only
+  scripts/g1-runtime bash -c '
+    test -x /opt/unitree_robotics/unitree_mujoco/simulate/build/unitree_mujoco
+    test -f /opt/onnxruntime/lib/libonnxruntime.so
+    test -f /opt/unitree_robotics/lib/libunitree_sdk2.a
+    ros2 pkg prefix fast_lio
+    ros2 pkg prefix canopy
+    ros2 pkg prefix g1_orchestration
+    ros2 pkg prefix rtabmap_slam
+  '
+  exit
+fi
+[[ -f .runtime/noble/opt/ros/jazzy/setup.bash ]] || scripts/bootstrap
+python3 scripts/g1-fetch.py
+scripts/runtime env FAKEROOTDONTTRYCHOWN=1 fakeroot-sysv env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-upgrade \
+  cmake ninja-build libboost-all-dev libeigen3-dev libfmt-dev libglfw3-dev libspdlog-dev \
+  libyaml-cpp-dev libssl-dev libtinyxml2-dev nlohmann-json3-dev libpcl-dev libopencv-dev \
+  python3-dev python3-pil python3-scipy python3-pytest xvfb xauth \
+  ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-xacro \
+  ros-jazzy-launch-testing ros-jazzy-launch-testing-ament-cmake ros-jazzy-ament-cmake-gmock \
+  ros-jazzy-ament-cmake-pytest ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
+  ros-jazzy-realtime-tools ros-jazzy-control-toolbox ros-jazzy-transmission-interface \
+  ros-jazzy-backward-ros ros-jazzy-tinyxml2-vendor ros-jazzy-ros2-control-cmake \
+  ros-jazzy-pointcloud-to-laserscan ros-jazzy-behaviortree-cpp ros-jazzy-vision-msgs \
+  ros-jazzy-pcl-ros ros-jazzy-pcl-conversions ros-jazzy-tf-transformations
+for patch_file in g1/patches/*.patch; do
+  if patch -d third_party/grove-g1 -p1 --forward --dry-run < "$patch_file" >/dev/null 2>&1; then
+    patch -d third_party/grove-g1 -p1 --forward < "$patch_file"
+  else
+    patch -d third_party/grove-g1 -p1 --reverse --dry-run < "$patch_file" >/dev/null
+  fi
+done
+scripts/runtime bash -c '
+set -e
+cmake -S /workspace/third_party/grove-g1/dependencies/unitree_sdk2 -B /workspace/.runtime/build-unitree \
+ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/unitree_robotics -DBUILD_EXAMPLES=OFF
+cmake --build /workspace/.runtime/build-unitree --parallel 2
+cmake --install /workspace/.runtime/build-unitree
+cmake -S /workspace/third_party/grove-g1/dependencies/Livox-SDK2 -B /workspace/.runtime/build-livox -DCMAKE_BUILD_TYPE=Release
+cmake --build /workspace/.runtime/build-livox --parallel 2
+cmake --install /workspace/.runtime/build-livox
+mkdir -p /opt/unitree_robotics/unitree_mujoco
+cp -a /workspace/third_party/grove-g1/workspace/vendor/unitree_mujoco/. /opt/unitree_robotics/unitree_mujoco/
+test -e /opt/unitree_robotics/unitree_mujoco/simulate/mujoco || \
+ ln -s /opt/unitree_robotics/mujoco-3.3.6 /opt/unitree_robotics/unitree_mujoco/simulate/mujoco
+cmake -S /opt/unitree_robotics/unitree_mujoco/simulate -B /opt/unitree_robotics/unitree_mujoco/simulate/build \
+ -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/opt/unitree_robotics/lib/cmake
+cmake --build /opt/unitree_robotics/unitree_mujoco/simulate/build --target unitree_mujoco --parallel 2
+mkdir -p /etc/cyclonedds
+cp /workspace/g1/config/cyclonedds.xml /etc/cyclonedds/cyclonedds.xml
+echo /opt/onnxruntime/lib > /etc/ld.so.conf.d/onnxruntime.conf
+ldconfig
+'
+# The complete delivery includes converted assets and their upstream licence manifest.
+# Avoid an unpinned asset conversion/download during a routine ROS rebuild.
+test -s third_party/grove-g1/workspace/assets/manifest.yaml || {
+  echo 'Restore the supplied Grove workspace/assets directory before generating the apartment.' >&2
+  exit 1
+}
+scripts/g1-build
+scripts/g1-runtime dpkg-query -W > logs/g1-installed-packages.tsv

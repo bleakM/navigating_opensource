@@ -1,0 +1,17 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+    # Sim-only SDK LowState.tick is the actual MuJoCo physics clock. Publishing
+    # it here avoids camera socket backpressure stalling controller_manager.
+    publish_physics_clock: true
+    # Pause physics if the external 250 Hz control cycle has not acknowledged
+    # two 4 ms periods (one transport cycle of slack).
+    simulation_step_budget_ms: 8
+controller_manager:
+  ros__parameters:
+    # MuJoCo ticks every 2 ms. A 4 ms control period divides that clock;
+    # 5 ms periods otherwise wait for a later tick and slow the gait policy.
+    update_rate: 250
+agile_controller:
+  ros__parameters:
+    decimation: 5  # Preserve the pretrained policy's exact 50 Hz inference rate.

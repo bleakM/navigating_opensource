@@ -1,0 +1,61 @@
+# RTAB-Map owns only map->odom. Grove FAST-LIO owns odom->base_footprint.
+/**:
+  ros__parameters:
+    use_sim_time: true
+    frame_id: base_footprint
+    odom_frame_id: odom
+    map_frame_id: map
+    publish_tf: true
+    subscribe_rgb: true
+    subscribe_depth: true
+    subscribe_scan: false
+    subscribe_scan_cloud: true
+    approx_sync: true
+    approx_sync_max_interval: 0.08
+    topic_queue_size: 30
+    sync_queue_size: 30
+    qos_image: 2
+    qos_camera_info: 2
+    qos_scan: 2
+    wait_for_transform: 0.5
+    # Canopy waits for a map publication after each viewpoint. Include the live
+    # uncommitted scan even while below the SLAM keyframe motion threshold.
+    map_always_update: true
+    scan_voxel_size: 0.15
+    scan_range_max: 12.0
+    cloud_decimation: 4
+    cloud_max_depth: 8.0
+    cloud_voxel_size: 0.08
+    Rtabmap/DetectionRate: '1.0'
+    Rtabmap/PublishRAMUsage: 'true'
+    RGBD/LinearUpdate: '0.2'
+    RGBD/AngularUpdate: '0.15'
+    RGBD/OptimizeFromGraphEnd: 'false'
+    RGBD/ProximityBySpace: 'true'
+    RGBD/NeighborLinkRefining: 'true'
+    # Keep enough odometry constraints to distinguish similar rooms during a
+    # cross-room walk. The 10-frame default forgot the initial localization.
+    RGBD/MaxOdomCacheSize: '100'
+    RGBD/LocalizationSecondTryWithoutProximityLinks: 'false'
+    Reg/Force3DoF: 'true'
+    Reg/Strategy: '2'
+    Icp/VoxelSize: '0.1'
+    Icp/MaxCorrespondenceDistance: '0.3'
+    Icp/CorrespondenceRatio: '0.2'
+    Icp/PointToPlane: 'true'
+    Icp/MaxIterations: '10'
+    Mem/DepthCompressionFormat: '.png'
+    Mem/NotLinkedNodesKept: 'false'
+    Grid/Sensor: '2'
+    # Keep 3D ground/obstacle points; avoid a dense 3D free-space cache.
+    Grid/3D: 'true'
+    Grid/CellSize: '0.05'
+    Grid/RangeMin: '0.5'
+    Grid/RangeMax: '12.0'
+    Grid/NormalsSegmentation: 'false'
+    Grid/MaxGroundHeight: '0.12'
+    # G1 fits below the 2.1 m lintels. Keep these overhead returns out of
+    # the 2D traversability grid so they cannot close a physically open doorway.
+    Grid/MaxObstacleHeight: '1.9'
+    Grid/MinClusterSize: '10'
+    Grid/RayTracing: 'false'

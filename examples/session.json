@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "id": "exhibition",
+    "name": "Exhibition",
+    "scene": "examples/exhibition/scene.xml",
+    "acoustic": "examples/exhibition/acoustic.yaml",
+    "area": 216,
+    "spawn": [
+      -6.1285943633,
+      3.9535768064
+    ]
+  },
+  "actors": []
+}

@@ -1,0 +1,4 @@
+g1_base_approach:
+  ros__parameters:
+    cmd_vel_topic: /cmd_vel_navigation
+    step_clear.body_radius_m: 0.45

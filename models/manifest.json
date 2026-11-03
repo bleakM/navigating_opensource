@@ -1,0 +1,56 @@
+[
+  {
+    "path": "models/campplus-zh-en.onnx",
+    "url": "https://api.github.com/repos/k2-fsa/sherpa-onnx/releases/assets/198893102",
+    "accept": "application/octet-stream",
+    "sha256": "aa3cfc16963a10586a9393f5035d6d6b57e98d358b347f80c2a30bf4f00ceba2",
+    "license": "Apache-2.0"
+  },
+  {
+    "path": "models/yunet.onnx",
+    "url": "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+    "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+    "license": "MIT"
+  },
+  {
+    "path": "models/sface.onnx",
+    "url": "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx",
+    "sha256": "0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79",
+    "license": "Apache-2.0"
+  },
+  {
+    "path": "models/silero-vad.onnx",
+    "url": "https://raw.githubusercontent.com/snakers4/silero-vad/v5.0/src/silero_vad/data/silero_vad.onnx",
+    "mirror": "https://modelscope.cn/models/pengzhendong/silero-vad/resolve/370539c71ec0ac703627938064cf31c1852186d7/v5/silero_vad.onnx",
+    "sha256": "2623a2953f6ff3d2c1e61740c6cdb7168133479b267dfef114a4a3cc5bdd788f",
+    "license": "MIT"
+  },
+  {
+    "path": "models/kws-zh/decoder-epoch-99-avg-1-chunk-16-left-64.int8.onnx",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
+    "sha256": "ed83454004d5bd16d831eaf00adcd181ed7734886aab6ef440f3ffa5aa3cfe3b",
+    "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+  },
+  {
+    "path": "models/kws-zh/encoder-epoch-99-avg-1-chunk-16-left-64.int8.onnx",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
+    "sha256": "dd784973fc9d2fabb3b800d6dcd20fc3b0ca84f8e2415afe54b032878e447f4d",
+    "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+  },
+  {
+    "path": "models/kws-zh/joiner-epoch-99-avg-1-chunk-16-left-64.int8.onnx",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
+    "sha256": "f79760052b87239e325f0567c752ad3130b30d92effb847d4307743c20c59a24",
+    "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+  },
+  {
+    "path": "models/kws-zh/tokens.txt",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
+    "sha256": "72316508d9119696145abc6f1f8cdc46287535c34e5ce7e595f845cb1499cf2e",
+    "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+  }
+]

@@ -1,0 +1,30 @@
+# Grove's existing planner, tuned for geometric SLAM rather than exhaustive semantic inspection.
+/**:
+  ros__parameters:
+    # Simulated depth stamps are capture times and each frame uses its own TF.
+    # Credit valid observations during walking instead of requiring another visit.
+    require_stillness: false
+    planner:
+      robot_radius: 0.45
+      clearance_margin: 0.25
+      frontier_clearance: 0.35
+      travel_margin: 0.05
+      travel_speed: 0.35
+      turn_speed: 0.8
+      dwell_time: 0.8
+      # A failed viewpoint beside furniture should invoke Grove's existing
+      # StepClear immediately, before another long Nav2 recovery cycle.
+      max_failures_in_a_row: 1
+      # Keep the original per-room completion logic and measured coverage; stop
+      # revisiting tiny low-gain camera patches after representative room views.
+      room_floor_goal: 0.6
+      room_face_goal: 0.5
+      min_viewpoint_rate: 20.0
+      min_viewpoint_gain: 80.0
+      # Tiny unknown islands behind chair legs are sensor shadows. The original
+      # pocket planner remains available for openings at least this large.
+      pocket_min_area: 0.75
+      pocket_min_edge: 0.75
+    approach:
+      standoff: 0.72
+      margin: 0.20

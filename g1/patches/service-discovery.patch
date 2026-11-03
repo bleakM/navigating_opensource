@@ -1,0 +1,35 @@
+--- a/workspace/src/g1_orchestration/include/g1_orchestration/service_leaf.hpp
++++ b/workspace/src/g1_orchestration/include/g1_orchestration/service_leaf.hpp
+@@ -15,6 +15,7 @@
+ #include <memory>
+ #include <rclcpp/rclcpp.hpp>
+ #include <string>
++#include <thread>
+ #include <utility>
+ 
+ #include "g1_orchestration/leaf_report.hpp"
+@@ -60,10 +61,24 @@
+         RCLCPP_ERROR(node->get_logger(), "service '%s' never appeared", service.c_str());
+         return nullptr;
+     }
++    // FastDDS can discover the request endpoint before the server has matched
++    // this short-lived client's response reader. An immediate state-changing
++    // request can then execute but lose its response (RMW_RET_TIMEOUT). Give
++    // discovery a bounded settling interval before sending, without retrying
++    // the request or extending the caller's original total time budget.
++    const auto discovery_grace = std::chrono::duration_cast<Clock::duration>(
++        std::chrono::milliseconds(500));
++    std::this_thread::sleep_for(std::min(remaining(), discovery_grace));
++    if (remaining() == Clock::duration::zero())
++    {
++        RCLCPP_ERROR(node->get_logger(), "service '%s' discovery budget expired", service.c_str());
++        return nullptr;
++    }
+     auto future = client->async_send_request(request);
+     if (rclcpp::spin_until_future_complete(node, future, remaining()) !=
+         rclcpp::FutureReturnCode::SUCCESS)
+     {
++        client->remove_pending_request(future);
+         RCLCPP_ERROR(node->get_logger(), "call to '%s' did not return", service.c_str());
+         return nullptr;
+     }

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Local Ubuntu rootfs only. No sudo, host apt, drivers, or global ROS changes.
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+command -v bwrap >/dev/null
+bwrap --unshare-user --uid 0 --gid 0 --ro-bind / / true
+mkdir -p .runtime/downloads logs maps
+archive=ubuntu-base-24.04.4-base-amd64.tar.gz
+checksum=c1e67ef7b17a6300e136118bd1dc04725009cb376c1aad10abcf8cd453628d58
+direct=http://127.0.0.1:17890
+if [[ ! -x .runtime/noble/bin/bash ]]; then
+  if [[ ! -f .runtime/downloads/$archive ]]; then
+    if ! curl -x "$direct" -fL --connect-timeout 10 --max-time 180 --speed-limit 100000 --speed-time 30 \
+      "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/$archive" -o ".runtime/downloads/$archive.part"; then
+      # A suitable, exact-version university mirror is tried before AUTO.
+      curl -x "$direct" -fL --connect-timeout 10 --max-time 180 \
+        "https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/24.04/release/$archive" -o ".runtime/downloads/$archive.part"
+    fi
+    mv ".runtime/downloads/$archive.part" ".runtime/downloads/$archive"
+  fi
+  echo "$checksum  .runtime/downloads/$archive" | sha256sum -c -
+  mkdir -p .runtime/noble
+  tar --no-same-owner --exclude='dev/*' -xzf ".runtime/downloads/$archive" -C .runtime/noble
+fi
+cp -L /etc/resolv.conf .runtime/noble/etc/resolv.conf
+mkdir -p .runtime/noble/etc/ssl/certs
+cp /etc/ssl/certs/ca-certificates.crt .runtime/noble/etc/ssl/certs/
+if [[ ! -s .runtime/downloads/ros.key ]]; then
+  curl -x "$direct" -fL --connect-timeout 10 --max-time 30 \
+    https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o .runtime/downloads/ros.key
+fi
+cp .runtime/downloads/ros.key .runtime/noble/usr/share/keyrings/ros-archive-keyring.gpg
+ros_source=https://packages.ros.org/ros2/ubuntu
+if ! curl -x "$direct" -fsSL --connect-timeout 10 --max-time 20 \
+  "$ros_source/dists/noble/InRelease" -o .runtime/downloads/ros-InRelease; then
+  ros_source=https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu
+  curl -x "$direct" -fsSL --connect-timeout 10 --max-time 20 \
+    "$ros_source/dists/noble/InRelease" -o .runtime/downloads/ros-InRelease
+fi
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] $ros_source noble main" > .runtime/noble/etc/apt/sources.list.d/ros2.list
+cat > .runtime/noble/etc/apt/apt.conf.d/99project <<'EOF'
+Acquire::http::Proxy "http://127.0.0.1:17890";
+Acquire::https::Proxy "http://127.0.0.1:17890";
+Acquire::Retries "0";
+Acquire::http::Timeout "20";
+Acquire::https::Timeout "20";
+Acquire::Languages "none";
+APT::Sandbox::User "root";
+APT::Install-Recommends "false";
+EOF
+cat > .runtime/noble/usr/sbin/policy-rc.d <<'EOF'
+#!/bin/sh
+exit 101
+EOF
+chmod +x .runtime/noble/usr/sbin/policy-rc.d
+scripts/runtime apt-get update
+if [[ ! -x .runtime/noble/usr/bin/fakeroot-sysv ]]; then
+  scripts/runtime bash -c 'cd /var/cache/apt/archives && apt-get download fakeroot libfakeroot'
+  python3 - <<'PY'
+from pathlib import Path
+import subprocess
+root = Path('.runtime/noble')
+for pattern in ['fakeroot_*amd64.deb', 'libfakeroot_*amd64.deb']:
+    for package in (root / 'var/cache/apt/archives').glob(pattern):
+        subprocess.run(['dpkg-deb', '-x', str(package), str(root)], check=True)
+PY
+fi
+scripts/runtime env FAKEROOTDONTTRYCHOWN=1 fakeroot-sysv env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  ros-jazzy-ros-base ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
+  ros-jazzy-rtabmap-ros ros-jazzy-rviz2 python3-colcon-common-extensions \
+  python3-pytest python3-yaml ros-jazzy-sensor-msgs-py git ca-certificates mesa-utils libgl1-mesa-dri fakeroot build-essential patch

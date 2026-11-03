@@ -1,0 +1,28 @@
+--- a/workspace/src/g1_navigation/launch/nav2.launch.py
++++ b/workspace/src/g1_navigation/launch/nav2.launch.py
+@@ -13,6 +13,7 @@
+     GroupAction,
+     OpaqueFunction,
+     SetEnvironmentVariable,
++    TimerAction,
+ )
+ from launch.conditions import IfCondition
+ from launch.substitutions import LaunchConfiguration
+@@ -129,13 +130,15 @@
+             server(
+                 "nav2_bt_navigator", "bt_navigator", "bt_navigator", [params, bt_xml], TF_REMAPPINGS
+             ),
+-            server(
++            # Let the server participants discover each other before their first
++            # lifecycle RPC; immediate FastDDS replies can otherwise time out.
++            TimerAction(period=3.0, actions=[server(
+                 "nav2_lifecycle_manager",
+                 "lifecycle_manager",
+                 "lifecycle_manager_navigation",
+                 [params, {"autostart": LaunchConfiguration("autostart")}],
+                 [],
+-            ),
++            )]),
+             # Only with keepout: the filter reads the mask once this server names it, so who
+             # reads the mask says whether the zones reach Nav2.
+             GroupAction(

@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+if [[ -f /opt/ros/jazzy/setup.bash ]]; then source /opt/ros/jazzy/setup.bash; fi
+
+
+if [[ $# -eq 0 ]]; then exec /bin/bash --norc; fi
+exec python3 /workspace/scripts/exec_signals.py default "$@"

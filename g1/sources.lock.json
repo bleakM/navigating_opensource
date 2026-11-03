@@ -1,0 +1,72 @@
+[
+  {
+    "name": "grove-g1",
+    "url": "https://codeload.github.com/Adyansh04/grove-g1/tar.gz/367e13a22043fcadff02f751ba395918ccd1e850",
+    "ref": "367e13a22043fcadff02f751ba395918ccd1e850",
+    "sha256": "7419bf84c97b135532fa20867a241e0b752037a728045c9de07bb3a5cc22bbde",
+    "destination": "third_party/grove-g1"
+  },
+  {
+    "name": "unitree_mujoco",
+    "url": "https://codeload.github.com/Adyansh04/unitree_mujoco/tar.gz/8467dea26a09fff3fbff08402c9c9ca9005dab74",
+    "ref": "8467dea26a09fff3fbff08402c9c9ca9005dab74",
+    "sha256": "51ea78165c4e5b216e546856296ae5e7b19663e50e44ae71d1ae5b9276f2a677",
+    "destination": "third_party/grove-g1/workspace/vendor/unitree_mujoco"
+  },
+  {
+    "name": "livox_driver",
+    "url": "https://codeload.github.com/Adyansh04/livox_ros_driver2/tar.gz/c13c64daacccae1af592cebdc01b367359b0176b",
+    "ref": "c13c64daacccae1af592cebdc01b367359b0176b",
+    "sha256": "f77b749f260f0a6a031682fa80870a48ed1b83cdd1f334e1136a16ec6f74ddef",
+    "destination": "third_party/grove-g1/workspace/src/livox_ros_driver2"
+  },
+  {
+    "name": "fast_lio",
+    "url": "https://codeload.github.com/Adyansh04/FAST_LIO_LOCALIZATION_HUMANOID/tar.gz/1a4cb7949bbf99db082b81396db90cfc857b0cab",
+    "ref": "1a4cb7949bbf99db082b81396db90cfc857b0cab",
+    "sha256": "161263802a8740c73d0e3249bc249380ea418da55370e6f519ec965dd2e73d23",
+    "destination": "third_party/grove-g1/workspace/src/fast_lio_humanoid"
+  },
+  {
+    "name": "canopy",
+    "url": "https://codeload.github.com/Adyansh04/canopy/tar.gz/89302a1419a5b279f465fa2c94de72aeda2ea6a8",
+    "ref": "89302a1419a5b279f465fa2c94de72aeda2ea6a8",
+    "sha256": "6d10ff730fe90aeee1c977a53d845b2d44da086d08c654ffa263618aa0c090e9",
+    "destination": "third_party/grove-g1/workspace/src/canopy"
+  },
+  {
+    "name": "nervros",
+    "url": "https://codeload.github.com/Adyansh04/nervros/tar.gz/d9d34d8b5819eecba22c1e9e9eb719fcf2afe686",
+    "ref": "d9d34d8b5819eecba22c1e9e9eb719fcf2afe686",
+    "sha256": "9285d89f711d9cfcefe0edac0c1018abc709476f7341b6e5c2636f32056f90eb",
+    "destination": "third_party/grove-g1/workspace/src/nervros"
+  },
+  {
+    "name": "unitree_sdk2",
+    "url": "https://codeload.github.com/unitreerobotics/unitree_sdk2/tar.gz/21d0a3b2c46ee48c8fdf2783becb6be3beb0a59b",
+    "ref": "21d0a3b2c46ee48c8fdf2783becb6be3beb0a59b",
+    "sha256": "d0b4680be4f7c3ab3eab2687e2e125164870a8893f3ee49c4f6d3bc1d86663e7",
+    "destination": "third_party/grove-g1/dependencies/unitree_sdk2"
+  },
+  {
+    "name": "livox_sdk2",
+    "url": "https://codeload.github.com/Livox-SDK/Livox-SDK2/tar.gz/08f523c930b2f0ba1e98a6afaa8d7476bf479908",
+    "ref": "08f523c930b2f0ba1e98a6afaa8d7476bf479908",
+    "sha256": "2e839e9bce66d83cbbc9dade0158133b7547143fb6b09dd210be91d6e271a9bd",
+    "destination": "third_party/grove-g1/dependencies/Livox-SDK2"
+  },
+  {
+    "name": "mujoco",
+    "url": "https://api.github.com/repos/google-deepmind/mujoco/releases/assets/293857462",
+    "sha256": "049204172901afad251070385a6badf46d795ebe47403d093f8469557eeeab5a",
+    "destination": ".runtime/noble/opt/unitree_robotics/mujoco-3.3.6",
+    "accept": "application/octet-stream"
+  },
+  {
+    "name": "onnxruntime",
+    "url": "https://api.github.com/repos/microsoft/onnxruntime/releases/assets/208183214",
+    "sha256": "67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105",
+    "destination": ".runtime/noble/opt/onnxruntime",
+    "accept": "application/octet-stream"
+  }
+]

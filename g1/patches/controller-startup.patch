@@ -1,0 +1,31 @@
+--- a/workspace/src/g1_bringup/launch/control.launch.py
++++ b/workspace/src/g1_bringup/launch/control.launch.py
+@@ -68,14 +68,20 @@
+ 
+ 
+ def _spawners(pin_pelvis):
+-    return [
+-        ExecuteProcess(
+-            cmd=["ros2", "run", "controller_manager", "spawner", *names, *extra],
+-            name=f"{names[0]}_spawner",
+-            output="screen",
+-        )
+-        for names, extra in _controllers(pin_pelvis)
+-    ]
++    # Jazzy controller_manager 4.48 serializes concurrent spawners with a
++    # process lock. Group the initial owners so all motors are driven together
++    # before the simulator releases its startup weld. Queue inactive spares
++    # afterwards, rather than relying on arbitrary process scheduling.
++    specs = _controllers(pin_pelvis)
++    active = [name for names, extra in specs if not extra or "--activate-as-group" in extra for name in names]
++    inactive = [name for names, extra in specs if "--inactive" in extra for name in names]
++    start = ExecuteProcess(
++        cmd=["ros2", "run", "controller_manager", "spawner", *active, "--activate-as-group"],
++        name="initial_controllers_spawner", output="screen")
++    spare = ExecuteProcess(
++        cmd=["ros2", "run", "controller_manager", "spawner", *inactive, "--inactive"],
++        name="inactive_controllers_spawner", output="screen")
++    return [RegisterEventHandler(OnProcessExit(target_action=start, on_exit=[spare])), start]
+ 
+ 
+ def _robot_state_publisher():

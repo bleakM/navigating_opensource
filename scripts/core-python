@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+graphics=${G1_GPU:-0}
+if [[ -z ${G1_GPU+x} && -n ${DISPLAY:-} && -e /dev/nvidia0 ]]; then graphics=1; fi
+exec env G1_GPU="$graphics" scripts/g1-runtime env WB_HARDWARE_GL="$graphics" bash -c '
+if [[ -f /workspace/interaction_ws/install/local_setup.bash ]]; then source /workspace/interaction_ws/install/local_setup.bash; fi
+export PYTHONPATH=/workspace/core/src:/workspace/interaction/src:${PYTHONPATH:-}
+export YOLO_OFFLINE=true YOLO_AUTOINSTALL=false YOLO_CONFIG_DIR=/workspace/.runtime/yolo
+export OPENBLAS_NUM_THREADS=2 OMP_NUM_THREADS=2
+exec /workspace/.runtime/python/bin/python "$@"' workbench "$@"

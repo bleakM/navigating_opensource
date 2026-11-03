@@ -1,0 +1,225 @@
+--- a/workspace/src/g1_hardware_interface/CMakeLists.txt
++++ b/workspace/src/g1_hardware_interface/CMakeLists.txt
+@@ -10,6 +10,7 @@
+ find_package(hardware_interface REQUIRED)
+ find_package(pluginlib REQUIRED)
+ find_package(rclcpp REQUIRED)
++find_package(rosgraph_msgs REQUIRED)
+ find_package(rclcpp_lifecycle REQUIRED)
+ find_package(realtime_tools REQUIRED)
+ 
+@@ -52,6 +53,7 @@
+   rclcpp_lifecycle::rclcpp_lifecycle
+   realtime_tools::realtime_tools
+   ${diagnostic_msgs_TARGETS}
++  ${rosgraph_msgs_TARGETS}
+ )
+ # unitree_sdk2's dds_entity.hpp uses the deprecated std::result_of, which InitChannel
+ # instantiates. Scoped to this target; drop it once the SDK stops using it.
+--- a/workspace/src/g1_hardware_interface/include/g1_hardware_interface/g1_lowcmd_system.hpp
++++ b/workspace/src/g1_hardware_interface/include/g1_hardware_interface/g1_lowcmd_system.hpp
+@@ -27,6 +27,7 @@
+ #include "hardware_interface/types/hardware_component_interface_params.hpp"
+ #include "hardware_interface/types/hardware_interface_return_values.hpp"
+ #include "rclcpp/rclcpp.hpp"
++#include "rosgraph_msgs/msg/clock.hpp"
+ #include "rclcpp_lifecycle/state.hpp"
+ #include "realtime_tools/realtime_buffer.hpp"
+ 
+@@ -224,6 +225,9 @@
+ 
+     /// Spun by controller_manager's own executor, which on_init receives in its params.
+     rclcpp::Node::SharedPtr                                             node_;
++    rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr physics_clock_pub_;
++    std::int64_t last_physics_tick_ = -1;
++    int simulation_step_budget_ms_ = 0;
+     rclcpp::Executor::WeakPtr                                           executor_;
+     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
+     rclcpp::TimerBase::SharedPtr                                        diagnostics_timer_;
+--- a/workspace/src/g1_hardware_interface/package.xml
++++ b/workspace/src/g1_hardware_interface/package.xml
+@@ -15,6 +15,7 @@
+   <depend>hardware_interface</depend>
+   <depend>pluginlib</depend>
+   <depend>rclcpp</depend>
++  <depend>rosgraph_msgs</depend>
+   <depend>rclcpp_lifecycle</depend>
+   <depend>realtime_tools</depend>
+   <depend>diagnostic_msgs</depend>
+--- a/workspace/src/g1_hardware_interface/src/g1_lowcmd_system.cpp
++++ b/workspace/src/g1_hardware_interface/src/g1_lowcmd_system.cpp
+@@ -189,6 +189,14 @@
+ 
+     node_ = std::make_shared<rclcpp::Node>(
+         "g1_lowcmd_system_" + std::to_string(reinterpret_cast<std::uintptr_t>(this)));
++    // Simulation-only: the existing SDK tick is MuJoCo time in milliseconds.
++    // Keep the gait clock independent of the high-bandwidth camera relay.
++    if (node_->declare_parameter<bool>("publish_physics_clock", false))
++    {
++        physics_clock_pub_ = node_->create_publisher<rosgraph_msgs::msg::Clock>(
++            "/clock", rclcpp::ClockQoS());
++        simulation_step_budget_ms_ = node_->declare_parameter<int>("simulation_step_budget_ms", 0);
++    }
+     if (auto executor = executor_.lock())
+     {
+         executor->add_node(node_->get_node_base_interface());
+@@ -397,6 +405,14 @@
+     sample.arrival = std::chrono::steady_clock::now();
+     lowstate_buffer_.writeFromNonRT(sample);
+     first_state_received_ = true;
++    const auto tick = static_cast<std::int64_t>(sample.state.tick());
++    if (physics_clock_pub_ && tick > last_physics_tick_)
++    {
++        rosgraph_msgs::msg::Clock clock;
++        clock.clock = rclcpp::Time(tick * 1000000LL, RCL_ROS_TIME);
++        physics_clock_pub_->publish(clock);
++        last_physics_tick_ = tick;
++    }
+ }
+ 
+ hardware_interface::CallbackReturn
+@@ -601,7 +617,7 @@
+ }
+ 
+ hardware_interface::return_type
+-G1LowCmdSystem::write(const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/)
++G1LowCmdSystem::write(const rclcpp::Time& time, const rclcpp::Duration& /*period*/)
+ {
+     // Raised before active_ is read, both sequentially consistent: either the release ramp sees
+     // this flag and waits, or this sees active_ cleared and stays out.
+@@ -622,6 +638,14 @@
+             jd.position_state);
+     }
+ 
++    // Simulation transport acknowledgement only; no pose or motor target is
++    // synthesized. The simulator pauses if this existing control loop is late.
++    if (simulation_step_budget_ms_ > 0)
++    {
++        low_cmd_.reserve()[0] = 0x47524F56U;
++        low_cmd_.reserve()[1] = static_cast<std::uint32_t>(time.nanoseconds() / 1000000LL);
++        low_cmd_.reserve()[2] = static_cast<std::uint32_t>(simulation_step_budget_ms_);
++    }
+     if (!publishLowCmd())
+     {
+         RCLCPP_ERROR(logger_, "rt/lowcmd write refused -- the robot is no longer being commanded");
+--- a/workspace/src/g1_sensor_relay/CMakeLists.txt
++++ b/workspace/src/g1_sensor_relay/CMakeLists.txt
+@@ -10,6 +10,7 @@
+ find_package(livox_ros_driver2 REQUIRED)
+ find_package(nav_msgs REQUIRED)
+ find_package(rclcpp REQUIRED)
++find_package(rosgraph_msgs REQUIRED)
+ find_package(sensor_msgs REQUIRED)
+ find_package(tf2 REQUIRED)
+ find_package(tf2_geometry_msgs REQUIRED)
+@@ -45,6 +46,7 @@
+   ${nav_msgs_TARGETS}
+   ${sensor_msgs_TARGETS}
+   ${vision_msgs_TARGETS}
++  ${rosgraph_msgs_TARGETS}
+ )
+ 
+ # Restates the relay's own output in the format FAST-LIO wants. Separate executable so the
+--- a/workspace/src/g1_sensor_relay/package.xml
++++ b/workspace/src/g1_sensor_relay/package.xml
+@@ -14,6 +14,7 @@
+   <buildtool_depend>ament_cmake</buildtool_depend>
+ 
+   <depend>rclcpp</depend>
++  <depend>rosgraph_msgs</depend>
+   <depend>sensor_msgs</depend>
+   <depend>geometry_msgs</depend>
+   <depend>nav_msgs</depend>
+--- a/workspace/src/g1_sensor_relay/src/g1_sensor_relay_node.cpp
++++ b/workspace/src/g1_sensor_relay/src/g1_sensor_relay_node.cpp
+@@ -25,6 +25,7 @@
+ #include <nav_msgs/msg/odometry.hpp>
+ #include <optional>
+ #include <rclcpp/rclcpp.hpp>
++#include <rosgraph_msgs/msg/clock.hpp>
+ #include <sensor_msgs/msg/camera_info.hpp>
+ #include <sensor_msgs/msg/image.hpp>
+ #include <sensor_msgs/msg/imu.hpp>
+@@ -60,6 +61,12 @@
+       : rclcpp::Node("g1_sensor_relay")
+     {
+         socket_path_    = declare_parameter<std::string>("socket_path", "/tmp/g1_sensors.sock");
++        publish_sim_clock_ = declare_parameter<bool>("publish_sim_clock", false);
++        stamp_with_sim_time_ = declare_parameter<bool>("stamp_with_sim_time", false);
++        if (publish_sim_clock_)
++        {
++            clock_pub_ = create_publisher<rosgraph_msgs::msg::Clock>("/clock", rclcpp::ClockQoS());
++        }
+         frame_id_       = declare_parameter<std::string>("frame_id", "mid360_link");
+         world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
+         const std::string topic = declare_parameter<std::string>("topic", "/livox/lidar");
+@@ -206,6 +213,9 @@
+         // The clock offset belongs to the connection: after a simulator restart sim_time is near
+         // zero, and the old running minimum would pin every new stamp near the Unix epoch.
+         have_clock_offset_ = false;
++        // A transport reconnect is not a simulator restart. Keep /clock's high
++        // watermark when delayed frames arrive on the new connection. This
++        // project restarts the relay together with each new physics session.
+     }
+ 
+     void poll()
+@@ -511,6 +521,21 @@
+         {
+             return arrival;
+         }
++        if (publish_sim_clock_ || stamp_with_sim_time_)
++        {
++            const auto nanoseconds = static_cast<std::int64_t>(sim_time_s * 1.0e9);
++            const rclcpp::Time capture(nanoseconds, RCL_ROS_TIME);
++            // Camera/scan frames can arrive after a newer IMU sample. Their stamps
++            // retain capture time while /clock only advances to the latest physics tick.
++            if (publish_sim_clock_ && nanoseconds > last_clock_ns_)
++            {
++                rosgraph_msgs::msg::Clock message;
++                message.clock = capture;
++                clock_pub_->publish(message);
++                last_clock_ns_ = nanoseconds;
++            }
++            return capture;
++        }
+         const double delta = arrival.seconds() - sim_time_s;
+ 
+         if (!have_clock_offset_ || delta < clock_offset_)
+@@ -596,6 +621,10 @@
+     /// Estimated offset from the simulator's clock to this node's, in seconds. See stampFor().
+     double clock_offset_      = 0.0;
+     bool   have_clock_offset_ = false;
++    bool publish_sim_clock_ = false;
++    bool stamp_with_sim_time_ = false;
++    std::int64_t last_clock_ns_ = -1;
++    rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_pub_;
+ 
+     int                       listen_fd_ = -1;
+     int                       client_fd_ = -1;
+--- a/workspace/src/g1_state_estimation/launch/fastlio_odometry.launch.py
++++ b/workspace/src/g1_state_estimation/launch/fastlio_odometry.launch.py
+@@ -14,6 +14,7 @@
+ )
+ from launch.substitutions import LaunchConfiguration
+ from launch_ros.actions import LifecycleNode, Node
++from launch_ros.parameter_descriptions import ParameterValue
+ 
+ SHARE = get_package_share_directory("g1_state_estimation")
+ RELAY_SHARE = get_package_share_directory("g1_sensor_relay")
+@@ -72,7 +73,7 @@
+         output="both",
+         parameters=[
+             _config(SHARE, "fastlio_mid360_sim.yaml" if sim else "fastlio_mid360_hardware.yaml"),
+-            {"use_sim_time": False},
++            {"use_sim_time": ParameterValue(LaunchConfiguration("use_sim_time"), value_type=bool)},
+         ],
+         # Its camera_init -> body pair is a second, disconnected root and nothing consumes it.
+         # Left on /tf every TF client sees two unconnected trees.
+@@ -110,6 +111,7 @@
+ def generate_launch_description():
+     return LaunchDescription(
+         [
++            DeclareLaunchArgument("use_sim_time", default_value="false"),
+             DeclareLaunchArgument(
+                 "sim",
+                 default_value="false",

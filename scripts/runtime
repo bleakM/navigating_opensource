@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PROJECT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+DEPS=${XIAOBEI_DEPENDENCIES:-}
+if [[ -z $DEPS && -f $PROJECT/dependencies.local.json ]]; then
+  DEPS=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["root"])' "$PROJECT/dependencies.local.json")
+fi
+DEPS=${DEPS:-$PROJECT}
+ROOTFS="$DEPS/.runtime/noble"
+[[ -x $ROOTFS/bin/bash ]] || { echo 'Prepare a Jazzy rootfs; see README.md.' >&2; exit 1; }
+mkdir -p "$PROJECT/.runtime/shm" "$PROJECT/.runtime/python" "$PROJECT/.runtime/interaction" "$PROJECT/.runtime/session" "$PROJECT/models/kws-zh" "$PROJECT/assets/avatars" "$PROJECT/maps" "$PROJECT/logs" "$PROJECT/third_party/grove-g1" "$PROJECT/g1_ws" "$PROJECT/interaction_ws"
+args=(--die-with-parent --unshare-user --uid 0 --gid 0
+  --bind "$ROOTFS" / --proc /proc --dev /dev --ro-bind /sys /sys
+  --bind "$PROJECT/.runtime/shm" /dev/shm --bind "$PROJECT" /workspace
+  --tmpfs /tmp --chdir /workspace --clearenv
+  --setenv HOME /root --setenv USER root
+  --setenv PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  --setenv LANG C.UTF-8 --setenv LC_ALL C.UTF-8
+  --setenv ROS_DOMAIN_ID "${ROS_DOMAIN_ID:-1}"
+  --setenv ROS_AUTOMATIC_DISCOVERY_RANGE LOCALHOST
+  --setenv OMP_NUM_THREADS 2 --setenv OPENBLAS_NUM_THREADS 1
+  --setenv QT_X11_NO_MITSHM 1)
+if [[ $(realpath "$DEPS") != "$PROJECT" ]]; then
+  # Reuse dependencies only. Maps, voice/face galleries and session state stay separate.
+  for folder in third_party/grove-g1 g1_ws interaction_ws .runtime/interaction; do
+    [[ ! -d $DEPS/$folder ]] || args+=(--bind "$DEPS/$folder" "/workspace/$folder")
+  done
+  PYENV="$DEPS/.runtime/python"
+  [[ -f $PYENV/pyvenv.cfg ]] || PYENV="$DEPS/.runtime/workbench"
+  args+=(--ro-bind "$PYENV" /workspace/.runtime/python)
+  [[ ! -d $DEPS/workbench/assets ]] || args+=(--ro-bind "$DEPS/workbench/assets" /workspace/assets/avatars)
+  for model in campplus-zh-en.onnx silero-vad.onnx yunet.onnx sface.onnx; do
+    [[ ! -f $DEPS/workbench/models/$model ]] || args+=(--ro-bind "$DEPS/workbench/models/$model" "/workspace/models/$model")
+  done
+  [[ ! -d $DEPS/interaction/models/kws-zh ]] || args+=(--ro-bind "$DEPS/interaction/models/kws-zh" /workspace/models/kws-zh)
+fi
+if [[ ${G1_GPU:-0} == 1 ]]; then
+  args+=(--tmpfs /opt/host-nvidia --setenv LD_LIBRARY_PATH /opt/host-nvidia --setenv __GLX_VENDOR_LIBRARY_NAME nvidia)
+  for device in /dev/nvidia0 /dev/nvidiactl /dev/nvidia-modeset /dev/nvidia-uvm /dev/nvidia-uvm-tools /dev/dri/renderD128 /dev/dri/card1; do
+    [[ ! -e $device ]] || args+=(--dev-bind "$device" "$device")
+  done
+  for library in /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libnvidia-*.so.*; do
+    [[ ! -f $library ]] || args+=(--ro-bind "$(readlink -f "$library")" "/opt/host-nvidia/$(basename "$library")")
+  done
+fi
+if [[ -n ${DISPLAY:-} && -d /tmp/.X11-unix ]]; then args+=(--ro-bind /tmp/.X11-unix /tmp/.X11-unix --setenv DISPLAY "$DISPLAY"); fi
+if [[ -n ${XAUTHORITY:-} && -f $XAUTHORITY ]]; then args+=(--ro-bind "$XAUTHORITY" /tmp/xauthority --setenv XAUTHORITY /tmp/xauthority); fi
+exec python3 "$PROJECT/scripts/exec_signals.py" ignore bwrap "${args[@]}" /bin/bash /workspace/scripts/inside "$@"
