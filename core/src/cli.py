@@ -117,7 +117,8 @@ def main():
         db=prepare(args.manifest,args.mode,args.database)
         command=['ros2','launch','/workspace/core/launch/session.launch.py','mode:='+args.mode,'database:='+str(db)]
         if args.initial_pose:command.append('initial_pose:='+args.initial_pose)
-        return subprocess.call(['python3','/workspace/scripts/run_launch.py',*command])
+        try:return subprocess.call(['python3','/workspace/scripts/run_launch.py',*command])
+        finally:write_json(DATA/'ready.json',{'ready':False,'phase':'stopped'})
 
 
 if __name__=='__main__':
