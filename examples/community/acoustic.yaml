@@ -1,0 +1,287 @@
+name: community
+outline:
+- - -10.0
+  - -5.0
+- - 10.0
+  - 5.0
+wall:
+  thickness: 0.12
+  height: 2.6
+  lintel: 2.1
+rooms:
+- id: corridor
+  name: central corridor
+  type: hallway
+  rect:
+  - - -10.0
+    - -1.25
+  - - 10.0
+    - 1.25
+- id: room_0
+  name: activity room
+  type: 公共空间
+  rect:
+  - - -10.0
+    - 1.25
+  - - 1.0
+    - 5.0
+- id: room_1
+  name: reading room
+  type: 公共空间
+  rect:
+  - - 1.0
+    - 1.25
+  - - 10.0
+    - 5.0
+- id: room_2
+  name: meeting room
+  type: 公共空间
+  rect:
+  - - -10.0
+    - -5.0
+  - - 1.0
+    - -1.25
+- id: room_3
+  name: lounge
+  type: 公共空间
+  rect:
+  - - 1.0
+    - -5.0
+  - - 10.0
+    - -1.25
+walls:
+- - - -10.0
+    - 1.25
+  - - 10.0
+    - 1.25
+- - - -10.0
+    - -1.25
+  - - 10.0
+    - -1.25
+- - - 1.0
+    - 1.25
+  - - 1.0
+    - 5.0
+- - - 1.0
+    - -5.0
+  - - 1.0
+    - -1.25
+doorways:
+- between:
+  - corridor
+  - room_0
+  centre:
+  - -4.5
+  - 1.25
+  width: 1.8
+- between:
+  - corridor
+  - room_1
+  centre:
+  - 5.5
+  - 1.25
+  width: 1.8
+- between:
+  - corridor
+  - room_2
+  centre:
+  - -4.5
+  - -1.25
+  width: 1.8
+- between:
+  - corridor
+  - room_3
+  centre:
+  - 5.5
+  - -1.25
+  width: 1.8
+floor: tex_laminate_floor
+floor_patches: []
+walls_texture: tex_plaster_wall
+lights:
+- name: sun
+  directional: true
+  dir:
+  - -0.3
+  - 0.25
+  - -0.9
+  diffuse: 0.4
+  shadow: false
+- name: lamp_0
+  pos:
+  - -4.5
+  - 3.125
+  - 2.5
+  diffuse: 0.35
+- name: lamp_1
+  pos:
+  - 5.5
+  - 3.125
+  - 2.5
+  diffuse: 0.35
+- name: lamp_2
+  pos:
+  - -4.5
+  - -3.125
+  - 2.5
+  diffuse: 0.35
+- name: lamp_3
+  pos:
+  - 5.5
+  - -3.125
+  - 2.5
+  diffuse: 0.35
+props:
+  room_0:
+  - body: desk_1
+    asset: ph_metal_office_desk
+    pose:
+    - -8.55
+    - 4.35
+    - 0
+  - body: chair_1
+    asset: ph_school_chair_01
+    pose:
+    - -8.55
+    - 3.3499999999999996
+    - 0
+  - body: desk_2
+    asset: ph_metal_office_desk
+    pose:
+    - -0.44999999999999996
+    - 4.35
+    - 0
+  - body: chair_2
+    asset: ph_school_chair_01
+    pose:
+    - -0.44999999999999996
+    - 3.3499999999999996
+    - 0
+  - body: bookshelf_1
+    asset: ph_wooden_bookshelf_worn
+    pose:
+    - -9.58
+    - 3.125
+    - 90
+  - body: potted_plant_1
+    asset: ph_potted_plant_01
+    pose:
+    - 0.44999999999999996
+    - 4.35
+    - 0
+    scale: 0.7
+  room_1:
+  - body: desk_3
+    asset: ph_metal_office_desk
+    pose:
+    - 2.45
+    - 4.35
+    - 0
+  - body: chair_3
+    asset: ph_school_chair_01
+    pose:
+    - 2.45
+    - 3.3499999999999996
+    - 0
+  - body: desk_4
+    asset: ph_metal_office_desk
+    pose:
+    - 8.55
+    - 4.35
+    - 0
+  - body: chair_4
+    asset: ph_school_chair_01
+    pose:
+    - 8.55
+    - 3.3499999999999996
+    - 0
+  - body: bookshelf_2
+    asset: ph_wooden_bookshelf_worn
+    pose:
+    - 1.42
+    - 3.125
+    - 90
+  - body: potted_plant_2
+    asset: ph_potted_plant_01
+    pose:
+    - 9.45
+    - 4.35
+    - 0
+    scale: 0.7
+  room_2:
+  - body: desk_5
+    asset: ph_metal_office_desk
+    pose:
+    - -8.55
+    - -4.35
+    - 180
+  - body: chair_5
+    asset: ph_school_chair_01
+    pose:
+    - -8.55
+    - -3.3499999999999996
+    - 180
+  - body: desk_6
+    asset: ph_metal_office_desk
+    pose:
+    - -0.44999999999999996
+    - -4.35
+    - 180
+  - body: chair_6
+    asset: ph_school_chair_01
+    pose:
+    - -0.44999999999999996
+    - -3.3499999999999996
+    - 180
+  - body: bookshelf_3
+    asset: ph_wooden_bookshelf_worn
+    pose:
+    - -9.58
+    - -3.125
+    - 90
+  - body: potted_plant_3
+    asset: ph_potted_plant_01
+    pose:
+    - 0.44999999999999996
+    - -4.35
+    - 0
+    scale: 0.7
+  room_3:
+  - body: desk_7
+    asset: ph_metal_office_desk
+    pose:
+    - 2.45
+    - -4.35
+    - 180
+  - body: chair_7
+    asset: ph_school_chair_01
+    pose:
+    - 2.45
+    - -3.3499999999999996
+    - 180
+  - body: desk_8
+    asset: ph_metal_office_desk
+    pose:
+    - 8.55
+    - -4.35
+    - 180
+  - body: chair_8
+    asset: ph_school_chair_01
+    pose:
+    - 8.55
+    - -3.3499999999999996
+    - 180
+  - body: bookshelf_4
+    asset: ph_wooden_bookshelf_worn
+    pose:
+    - 1.42
+    - -3.125
+    - 90
+  - body: potted_plant_4
+    asset: ph_potted_plant_01
+    pose:
+    - 9.45
+    - -4.35
+    - 0
+    scale: 0.7
+synonyms: {}

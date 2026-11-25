@@ -12,6 +12,15 @@
 <root BTCPP_format="4" main_tree_to_execute="Explore">
   <BehaviorTree ID="Explore">
     <Sequence name="explore">
+      <!-- RGB-D must observe the floor behind the fixed start as well. Without
+           this first look, a long corridor can appear disconnected in the
+           observed grid and the frontier pass may visit only one side.
+           TurnTo uses Nav2 and the real gait; no pose is assigned here. -->
+      <Sleep name="wait_for_executor_tf_subscription" msec="2000"/>
+      <ForceSuccess><TurnTo name="initial_look_left" yaw="1.57079632679"/></ForceSuccess>
+      <ForceSuccess><TurnTo name="initial_look_back" yaw="3.14159265359"/></ForceSuccess>
+      <ForceSuccess><TurnTo name="initial_look_right" yaw="-1.57079632679"/></ForceSuccess>
+      <ForceSuccess><TurnTo name="initial_look_forward" yaw="0.0"/></ForceSuccess>
       <SubTree ID="VisitViewpoints" name="close_the_map" mode="frontier"/>
       <SubTree ID="VisitViewpoints" name="see_every_room" mode="coverage"/>
       <!-- What the world model can tell is not an object goes before anyone checks the map by
@@ -60,7 +69,10 @@
                       <ForceSuccess name="turn_even_if_short">
                         <TurnTo name="face_heading" yaw="{heading}"/>
                       </ForceSuccess>
-                      <Sleep name="dwell_for_fresh_depth" msec="800"/>
+                      <!-- Geometric depth is processed during movement. Allow
+                           fresh frames after the turn without waiting for the
+                           disabled semantic detector. -->
+                      <Sleep name="dwell_for_fresh_depth" msec="400"/>
                     </Sequence>
                   </LoopDouble>
                   <ReportViewpoint name="report_reached" viewpoint_id="{viewpoint}" reached="true"/>

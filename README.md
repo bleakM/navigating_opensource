@@ -8,7 +8,11 @@ Unitree G1 在 MuJoCo 中自主探索、三维建图、重定位、导航，以�
 - **FAST-LIO2 → RTAB-Map**：前者发布局部惯性里程计，后者负责全局地图、回环、优化及保存地图重定位。RTAB-Map 是 `map → odom` 的唯一发布方。
 - **Canopy → Nav2**：从已观测地图选择探索视点和房间，使用官方路径平滑、速度平滑及碰撞保护执行。机器人半径 0.45 m、膨胀半径 1.2 m，期望速度 0.60 m/s，实际速度受控制器及场景约束。
 - **四通道波形 → sherpa-onnx 唤醒 → CAMPPlus 声纹 → SRP-PHAT**：识别“小北小北”，在测量时刻通过 TF 转换方位；保留多房间候选与衰减的位置记忆。
-- **RGB-D → YuNet / SFace → 安全接近**：只使用脸部特征匹配呼叫者。检测丢失先取消运动再重获；到达需新鲜人脸、合适停距和实际静止。活动任务期间其他呼叫不能抢占。
+- **RGB-D → YOLO11n-pose / OSNet → YuNet / SFace → 安全接近**：可选身体外观提示辅助寻找和选择观察点，最终身份确认仍使用脸部。检测丢失先取消运动再重获；到达需新鲜人脸、合适停距和实际静止。活动任务期间其他呼叫不能抢占。
+
+本轮提高建图效率：降低逐面扫描配额、减少低收益视点与等待，在开始时四向观察，并在结束前通过 Canopy 房间和 SLAM 优化轨迹检查实际房间访问。参数为地面配额 0.15、表面配额 0、视点最低收益 320、最多 2 个朝向、停留 0.4 s。保持原有步态、安全半径和导航速度限制。
+
+声音搜索将本地区域单列，保留最多三个优先远端候选房间及其余备选；结合分频段方向、次峰和衰减记忆，避免只押注一个房间。身体提示需连续观测，不能代替人脸或直接宣布到达。
 
 仿真器仅在生成传感器和声波时读取演员及机器人真值；音频感知端只收到波形，不收到声源位置或人物 ID。导航、SLAM 和人物确认均使用估计结果。声场采用镜像声源、门洞等效路径和透墙衰减，是工程近似，未做真实建筑声学标定。
 
@@ -60,9 +64,18 @@ G1_GPU=1 ./scripts/g1-runtime rviz2 -d /workspace/g1/config/mapping.rviz
 
 此源码拆分版已在现有隔离依赖上验证；全新机器从零安装尚未完整复验。不要在宿主执行这些项目依赖的 APT 或混用宿主 Python。
 
+本轮实测的家庭、社区活动中心也提供轻量场景配置与空人物会话，复用同一份家具资产：
+
+```bash
+./scripts/xiaobei run --manifest examples/session-home.json
+./scripts/xiaobei run --manifest examples/session-community.json
+```
+
+上述两个命令分别运行；它们使用当前公开版配置，不保证复现历史不同探索树版本的完全相同耗时。
+
 ### 地图保存、加载及导航
 
-探索树结束后自动保存数据库、二维地图、点云及图节点，再进行实际地图匹配。树成功只代表其视点调度结束，不等于独立覆盖率验收。
+探索树结束后检查已观测房间的实际访问，再自动保存数据库、二维地图、点云及图节点，最后进行实际地图匹配。未观测房间及分割遗漏无法通过该检查发现；树成功不等于独立覆盖率验收。
 
 ```bash
 ./scripts/xiaobei status
@@ -83,6 +96,15 @@ G1_GPU=1 ./scripts/g1-runtime rviz2 -d /workspace/g1/config/mapping.rviz
 
 图片必须只检测到一张清晰脸；绑定音频须清楚说“小北小北”。将 `examples/actors.example.json` 中对应演员复制到你本地的会话 `actors` 列表，最多四人；人物 ID 应与对应网格目录及身份库一致。用 `--manifest .local/session.json` 启动。人物无碰撞体积，并从建图传感器中排除；仅交互相机能看到人物。角色在视野中朝向机器人，不代表识别算法获得身份答案。
 
+可选身体外观注册：在项目 Python 3.12 环境中安装 `requirements-body.txt`，下载并校验附加权重后，独立渲染多角度人物模板。复用原工程依赖时无需重装。以下命令只在本地生成身体库；存在身体库时完整会话自动启动身体提示节点。
+
+```bash
+./scripts/core-python /workspace/scripts/fetch-models.py --body
+./scripts/xiaobei enroll-body --identity actor_a --height 1.64
+```
+
+`--height` 是注册相机的取景参考，不能宣称算法识别出真实身高。当前匹配使用 75% OSNet 与 25% 衣着颜色提示，阈值 0.68、与次高候选差至少 0.06；肩宽和身体比例仅作诊断。相同衣着、换衣、真实人物泛化尚未验收。YOLO/Ultralytics 的 AGPL-3.0 / 企业条款见第三方许可。
+
 ```bash
 ./scripts/xiaobei play --slot 0
 ./scripts/xiaobei play --slot 0 --wav .local/new-call.wav
@@ -93,13 +115,17 @@ G1_GPU=1 ./scripts/g1-runtime rviz2 -d /workspace/g1/config/mapping.rviz
 
 ## 验证范围
 
-来源版本 `10e8d16e2ec6a6a30dacabd18d9c4e871a741f46` 的最终场景完成过建图、保存/重启重定位及指定摆位三人连续寻人；并不代表任意人物位置均成功。源码来源与逐文件哈希见 `SOURCE_PROVENANCE.json`。
+最新来源版本 `bd5d8b5` 的本轮成果已同步；源码来源与逐文件哈希见 `SOURCE_PROVENANCE.json`。原工程的正常物理仿真实测：家庭 168 m² / 3 房间，从启动到保存并定位就绪 8.19 min（4.87 min/100 m²）；活动中心 200 m² / 4 房间为 7.34 min（3.67 min/100 m²）。两图各一轮最终建图通过，不是重复实验统计。
+
+活动中心候选修正版的一批三人寻人 3/3 成功、首轮远端候选 top3 3/3；第三个呼叫已有此前人脸记忆。最新家庭冷启动批次前两人成功、第三段音频超时，独立重呼叫后发生人脸恢复超时，近处再呼叫成功。不同版本和重试未混算成功率。身体外观受控渲染测试 64/64 正确，不等于真人识别准确率。小型分批结果见 [results/round1-summary.json](results/round1-summary.json)。
 
 本仓库的拆分验证见 `VALIDATION.md`。必要回归可运行：
 
 ```bash
 ./scripts/core-python -m unittest discover -s core/tests -v
 ./scripts/core-python /workspace/scripts/fetch-models.py --check
+# 启用身体提示时另外检查
+./scripts/core-python /workspace/scripts/fetch-models.py --check --body
 ```
 
 现实机器人、真实室内声场、任意地图和任意真人身份均未完成验收。预训练步态未重新训练，安全恢复存在次数和时间上限。不要把仿真成功解释为实机安全认证。

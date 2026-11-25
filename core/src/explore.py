@@ -13,6 +13,7 @@ from ament_index_python.packages import get_package_prefix,get_package_share_dir
 from nav_msgs.msg import OccupancyGrid
 from rclpy.qos import QoSProfile,DurabilityPolicy
 from common import DATA,ROOT,write_json,read_json
+from mapping_visits import MappingVisits
 
 LOCALIZATION_VALUES = {
     'Mem/IncrementalMemory': 'false',
@@ -23,6 +24,7 @@ LOCALIZATION_VALUES = {
 
 def main():
     rclpy.init();node=Node('workbench_exploration',parameter_overrides=[Parameter('use_sim_time',value=True)])
+    visits=MappingVisits(node)
     clients=[node.create_client(GetState,'/'+name+'/get_state') for name in ['planner_server','controller_server','smoother_server','velocity_smoother','bt_navigator','behavior_server','collision_monitor']]
     observed=[False]
     node.create_subscription(OccupancyGrid,'/map',lambda m:observed.__setitem__(0,any(v==0 for v in m.data)),QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
@@ -50,6 +52,7 @@ def main():
         write_json(DATA/'ready.json',{'ready':False,'phase':'mapping'})
         while child.poll() is None:rclpy.spin_once(node,timeout_sec=.2)
         if child.returncode:raise RuntimeError('Grove exploration did not succeed')
+        visits.finish()
         elapsed=time.monotonic()-began;sim_elapsed=node.get_clock().now().nanoseconds/1e9-sim_began
         write_json(DATA/'ready.json',{'ready':False,'phase':'saving'})
         child=subprocess.Popen(['python3','/workspace/scripts/save_map.py','--name',map_name,'--database',str(DATA/'mapping.db'),'--odom-topic','/g1_odometry_publisher/odom'])

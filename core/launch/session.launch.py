@@ -33,6 +33,11 @@ def start(context):
         include(str(Path(get_package_share_directory('canopy'))/'launch/world_model.launch.py'),cameras='chest=/chest_camera',odom_topic='/g1_odometry_publisher/odom',cloud_topic='/livox/lidar',map_topic='/navigation_map/costmap',params_file='/workspace/core/config/canopy.yaml',world_dir='',detector='false',describe='false',rviz='false'),
         process('faces_ros'),process('audio_ros','simulate'),process('audio_ros','perceive'),process('telemetry'),process('mission','--ros-args','-r','/map:=/navigation_map/costmap','-p','memory_scope:='+memory_scope),
         ExecuteProcess(cmd=[python,'/workspace/core/src/arms.py','--report','/workspace/.runtime/session/arms.json'],additional_env=env,output='screen')]
+    if Path('/workspace/.runtime/session/body-gallery.json').is_file():
+        for filename in ['osnet_x0_25_msmt17.pt','yolo11n-pose.pt']:
+            if not Path('/workspace/models',filename).is_file():
+                raise RuntimeError('Body gallery requires optional model: '+filename)
+        actions.append(process('bodies_ros'))
     resources=ExecuteProcess(cmd=['python3','/workspace/scripts/g1_resources.py','--launch-pid',str(os.getpid()),'--report','/workspace/.runtime/session/resources-health.json'],output='screen')
     def resources_exit(event,ctx):
         if ctx.is_shutdown or event.returncode==0:return []

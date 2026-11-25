@@ -30,27 +30,46 @@
     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
     "sha256": "ed83454004d5bd16d831eaf00adcd181ed7734886aab6ef440f3ffa5aa3cfe3b",
     "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
-    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f",
+    "archive_sha256": "b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
   },
   {
     "path": "models/kws-zh/encoder-epoch-99-avg-1-chunk-16-left-64.int8.onnx",
     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
     "sha256": "dd784973fc9d2fabb3b800d6dcd20fc3b0ca84f8e2415afe54b032878e447f4d",
     "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
-    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f",
+    "archive_sha256": "b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
   },
   {
     "path": "models/kws-zh/joiner-epoch-99-avg-1-chunk-16-left-64.int8.onnx",
     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
     "sha256": "f79760052b87239e325f0567c752ad3130b30d92effb847d4307743c20c59a24",
     "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
-    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f",
+    "archive_sha256": "b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
   },
   {
     "path": "models/kws-zh/tokens.txt",
     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01.tar.bz2",
     "sha256": "72316508d9119696145abc6f1f8cdc46287535c34e5ce7e595f845cb1499cf2e",
     "license": "Upstream model terms; sherpa-onnx implementation Apache-2.0",
-    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+    "note": "epoch99 int8; official archive SHA b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f",
+    "archive_sha256": "b2f7c89690dc8ce4c6ed6afeab7cd800c36ad1421fb6b6302b4a4b194cf7f35f"
+  },
+  {
+    "path": "models/osnet_x0_25_msmt17.pt",
+    "url": "https://drive.google.com/uc?id=1sSwXSUlj4_tHZequ_iZ8w_Jh0VaRQMqF",
+    "sha256": "6f57607fed9f502b9efed546108132ee715df5a5b6e6932c6269bacb47f59f99",
+    "optional": "body",
+    "license": "OSNet implementation MIT; checkpoint retains upstream model terms",
+    "reference": "https://github.com/mikel-brostrom/boxmot/blob/8351f5c74d5dda49cd1b322664f5cd42230cdb6a/boxmot/configs/reid/osnet-x0-25-msmt17.yaml"
+  },
+  {
+    "path": "models/yolo11n-pose.pt",
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt",
+    "sha256": "869e83fcdffdc7371fa4e34cd8e51c838cc729571d1635e5141e3075e9319dc0",
+    "optional": "body",
+    "license": "Ultralytics AGPL-3.0 / Enterprise; see upstream terms"
   }
 ]

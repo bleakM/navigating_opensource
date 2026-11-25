@@ -9,9 +9,10 @@ def digest(data):return hashlib.sha256(data).hexdigest()
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--check',action='store_true');p.add_argument('--proxy');args=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--check',action='store_true');p.add_argument('--proxy');p.add_argument('--body',action='store_true',help='Include optional OSNet / YOLO models');args=p.parse_args()
     archives={}
     for item in json.loads((ROOT/'models/manifest.json').read_text()):
+        if item.get('optional')=='body' and not args.body:continue
         path=ROOT/item['path']
         if path.is_file() and digest(path.read_bytes())==item['sha256']:
             print('verified',item['path']);continue

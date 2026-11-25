@@ -1,6 +1,6 @@
 {
-  "source_revision": "10e8d16e2ec6a6a30dacabd18d9c4e871a741f46",
-  "description": "Curated final algorithm sources; paths adapted, CLI added, web removed, exploration scoring decoupled.",
+  "source_revision": "bd5d8b56ac32de4f645b06c5d28adf948044fff5",
+  "description": "Curated algorithm core updated with fast observed-room mapping, body appearance hints and multi-room candidates. Paths adapted; original source-only CLI/state isolation retained; web and ground-truth evaluation excluded.",
   "files": [
     {
       "source": "workbench/src/arm_motion.py",
@@ -29,8 +29,8 @@
     {
       "source": "workbench/src/caller_memory.py",
       "destination": "core/src/caller_memory.py",
-      "source_sha256": "dd62c1d0ca73cd4c259b783a27b82f3c2492aaa391b2ca709d688def63c2d64e",
-      "exported_sha256": "dd62c1d0ca73cd4c259b783a27b82f3c2492aaa391b2ca709d688def63c2d64e"
+      "source_sha256": "d40aa205f97f736d043b1648f821617455d8be57b3f29e5ee97e2ea1ff02d039",
+      "exported_sha256": "d40aa205f97f736d043b1648f821617455d8be57b3f29e5ee97e2ea1ff02d039"
     },
     {
       "source": "workbench/src/common.py",
@@ -47,8 +47,8 @@
     {
       "source": "workbench/src/faces_ros.py",
       "destination": "core/src/faces_ros.py",
-      "source_sha256": "1b4519c7399003a2291775988660f404663d348499b2e485729742b9872e9068",
-      "exported_sha256": "1b4519c7399003a2291775988660f404663d348499b2e485729742b9872e9068"
+      "source_sha256": "942c5dca149d0e82b6d6d2012cb5fd1a0aa1b35b8cb1150c9ab37e48d073a643",
+      "exported_sha256": "942c5dca149d0e82b6d6d2012cb5fd1a0aa1b35b8cb1150c9ab37e48d073a643"
     },
     {
       "source": "workbench/src/identity.py",
@@ -65,8 +65,8 @@
     {
       "source": "workbench/src/mission.py",
       "destination": "core/src/mission.py",
-      "source_sha256": "52a6b6df5ae183e8e5d9dad8a59d67d7bb66053ac114e1c1c595300fd1cb6f02",
-      "exported_sha256": "52a6b6df5ae183e8e5d9dad8a59d67d7bb66053ac114e1c1c595300fd1cb6f02"
+      "source_sha256": "f64550d4f1e7264076d9ab9877ad8ed2a50a58033e1aa4992cf2536d236670ab",
+      "exported_sha256": "f64550d4f1e7264076d9ab9877ad8ed2a50a58033e1aa4992cf2536d236670ab"
     },
     {
       "source": "workbench/src/ready_ros.py",
@@ -101,14 +101,14 @@
     {
       "source": "workbench/src/explore.py",
       "destination": "core/src/explore.py",
-      "source_sha256": "0dcaddc8ce3db504916f5fd4506bc932eafb190b357089b4812fc42afcfb8bb1",
-      "exported_sha256": "c774a08f4807a0a60e42447bde4fb1b7ff277ab40f6ae571feeef1a4440d4f68"
+      "source_sha256": "6bfc6222abab51a2658d70e5c4911bdc5e5be784566cd7194720250c080d0aa7",
+      "exported_sha256": "dea580a46f79a1e2df32b055402aed6979cba16c14076ddb6dffc94192dd0012"
     },
     {
       "source": "workbench/launch/session.launch.py",
       "destination": "core/launch/session.launch.py",
-      "source_sha256": "eca7cfa79ffb68f7eeccdffdb963ef9e2bbffdcfa449363e79ebf4ee1a5669e2",
-      "exported_sha256": "cc999affb2baeb6d1655c7872c2096d2c501327afa2ca34e4fb7bae4d153656c"
+      "source_sha256": "36b6a505fdfe9c672aa73b41e9458a9bd23193a1ac10ca6cc8ece6eff80e85b5",
+      "exported_sha256": "b73d05723d818641e48cc4f7d12b836bc3b91a1d3d970f56ae6fc5ac7bf95ddf"
     },
     {
       "source": "workbench/launch/slam.launch.py",
@@ -149,8 +149,8 @@
     {
       "source": "workbench/config/canopy.yaml",
       "destination": "core/config/canopy.yaml",
-      "source_sha256": "17793ac91eac9d05e94e8dff2ca7cee90a921565155fc44e32eb6ba20327688f",
-      "exported_sha256": "17793ac91eac9d05e94e8dff2ca7cee90a921565155fc44e32eb6ba20327688f"
+      "source_sha256": "36d8c50efc473961b6584c34ca4663d6f66ed1637d1ffd013585a2fa43050c0b",
+      "exported_sha256": "e75f374b742977c9a1abd532613fb58906589056e4e721bf17bc3b6dc401896c"
     },
     {
       "source": "workbench/config/keywords.txt",
@@ -185,8 +185,8 @@
     {
       "source": "workbench/config/trees/explore.xml",
       "destination": "core/config/trees/explore.xml",
-      "source_sha256": "0d8104064e531bf688e322fcbe8a3fd709f62b7b4f77c56a1c03ce3dabfd65bc",
-      "exported_sha256": "0d8104064e531bf688e322fcbe8a3fd709f62b7b4f77c56a1c03ce3dabfd65bc"
+      "source_sha256": "5734e9a19cea7e6a744569d24725e4d00e1ab60ed6a3fc74e7929000a590c30f",
+      "exported_sha256": "5734e9a19cea7e6a744569d24725e4d00e1ab60ed6a3fc74e7929000a590c30f"
     },
     {
       "source": "workbench/build_native.py",
@@ -485,8 +485,8 @@
     {
       "source": "workbench/tests/test_mission_audio.py",
       "destination": "core/tests/test_mission_audio.py",
-      "source_sha256": "576954341819a5e610b9069bd4fcbeb3c31c8aa336c6a38502e9983e34ddb776",
-      "exported_sha256": "576954341819a5e610b9069bd4fcbeb3c31c8aa336c6a38502e9983e34ddb776"
+      "source_sha256": "dd367529d21342ded450e03a11cabbc1ae4d841e71c4b6c3c5a3ff8c3e09f02c",
+      "exported_sha256": "dd367529d21342ded450e03a11cabbc1ae4d841e71c4b6c3c5a3ff8c3e09f02c"
     },
     {
       "source": "workbench/tests/test_clearance_recovery.py",
@@ -523,6 +523,81 @@
       "destination": "licenses/LICENSE-GROVE",
       "source_sha256": "ce6f48b974f7688aea33365f0ef6700b79f58e29df7a44ed3ff5a9812640a573",
       "exported_sha256": "ce6f48b974f7688aea33365f0ef6700b79f58e29df7a44ed3ff5a9812640a573"
+    },
+    {
+      "source": "workbench/src/body_identity.py",
+      "destination": "core/src/body_identity.py",
+      "source_sha256": "eeb8413ded7fe2e9304526d602d38dc90346350ac09fa2a0f708778c7677393b",
+      "exported_sha256": "4f6766383ffbf96c0e67528e41be86ee505b22aeafffa2a185d2e247f24eee1a"
+    },
+    {
+      "source": "workbench/src/bodies_ros.py",
+      "destination": "core/src/bodies_ros.py",
+      "source_sha256": "e76bb252e650edddc43c755f177a8e98f94182fa025ea3229e05ddd38fd51b22",
+      "exported_sha256": "e76bb252e650edddc43c755f177a8e98f94182fa025ea3229e05ddd38fd51b22"
+    },
+    {
+      "source": "workbench/src/mapping_visits.py",
+      "destination": "core/src/mapping_visits.py",
+      "source_sha256": "21d43135bbaf58394ce81ce7e6ed1854477fa704e6ece44cc7e5643ca72e9c93",
+      "exported_sha256": "5cd5f338689f7a48c615eced782f9dbcc7efe36e1c6be67758ac5a05c171e50f"
+    },
+    {
+      "source": "workbench/src/enroll_bodies.py",
+      "destination": "core/src/enroll_bodies.py",
+      "source_sha256": "5d662d75b314a0d21a07566f61f3503ce4ec899de4af7655b24a944ab833a10e",
+      "exported_sha256": "5472f2c40dd230459d33382324243f61f614b4629dda37b95a7e6430a4e4333f"
+    },
+    {
+      "source": "workbench/tests/test_body_identity.py",
+      "destination": "core/tests/test_body_identity.py",
+      "source_sha256": "e92cae8e674ae75752cb050a3c3241f595fba371d7a2a81401f2cd7d9d6c7cb6",
+      "exported_sha256": "e92cae8e674ae75752cb050a3c3241f595fba371d7a2a81401f2cd7d9d6c7cb6"
+    },
+    {
+      "source": "workbench/tests/test_mapping_visits.py",
+      "destination": "core/tests/test_mapping_visits.py",
+      "source_sha256": "e47c9044a1bb78e48e19807849bb1b03526ca1f7660025220731d14d9d87ede9",
+      "exported_sha256": "e47c9044a1bb78e48e19807849bb1b03526ca1f7660025220731d14d9d87ede9"
+    },
+    {
+      "source": "workbench/vendor/osnet.py",
+      "destination": "core/vendor/osnet.py",
+      "source_sha256": "c7c1c29187d6330f859c91da229271531920464c7011aec13842a086b2263cae",
+      "exported_sha256": "c7c1c29187d6330f859c91da229271531920464c7011aec13842a086b2263cae"
+    },
+    {
+      "source": "workbench/vendor/OSNET_LICENSE",
+      "destination": "licenses/LICENSE-OSNET",
+      "source_sha256": "3ac8ce2a83d170cb1c7c84152e0c1faca1f187794303514383960d2441716247",
+      "exported_sha256": "3ac8ce2a83d170cb1c7c84152e0c1faca1f187794303514383960d2441716247"
+    },
+    {
+      "source": ".runtime/workbench/resources/store-community/scene.xml",
+      "destination": "examples/community/scene.xml",
+      "source_sha256": "f884e6558f3182fae731b1d7d9ec4cabf37df6ffbdbefc33cd2c4add64469cc6",
+      "exported_sha256": "f884e6558f3182fae731b1d7d9ec4cabf37df6ffbdbefc33cd2c4add64469cc6"
+    },
+    {
+      "source": ".runtime/workbench/resources/store-community/acoustic.yaml",
+      "destination": "examples/community/acoustic.yaml",
+      "source_sha256": "a377896d39ea52f1db2eb174e20c8a80f1ebe2a62802f090266446972416d126",
+      "exported_sha256": "a377896d39ea52f1db2eb174e20c8a80f1ebe2a62802f090266446972416d126"
+    },
+    {
+      "source": ".runtime/workbench/resources/store-community/sources.json",
+      "destination": "examples/community/sources.json",
+      "source_sha256": "bde51385644695ad23243e27173843eb1ef62ce70da90250cbc90b0cc17e5d3a",
+      "exported_sha256": "bde51385644695ad23243e27173843eb1ef62ce70da90250cbc90b0cc17e5d3a"
     }
+  ],
+  "previous_source_revision": "10e8d16e2ec6a6a30dacabd18d9c4e871a741f46",
+  "updated": "2026-11-25",
+  "independent_adaptations": [
+    "core/src/cli.py: source-only CLI, adds optional enroll-body command",
+    "core/src/common.py: independent .runtime/session state",
+    "core/src/explore.py: observed-room visits and saving/localization gates; no full-scene truth audit",
+    "scripts/runtime: dependency reuse, optional read-only body-model bindings",
+    "scripts/fetch-models.py: optional body-model hashes/download selection"
   ]
 }

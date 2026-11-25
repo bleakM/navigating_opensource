@@ -20,6 +20,7 @@ from common import DATA,ROOT,read_json,write_json,atomic
 class FaceNode(Node):
     def __init__(self):
         super().__init__('xiaobei_face_recognition',parameter_overrides=[Parameter('use_sim_time',value=True)])
+        cv2.setNumThreads(1)
         self.faces=Faces();self.bridge=CvBridge();self.tf=Buffer();self.listener=TransformListener(self.tf,self)
         self.info=None;self.packet=None;self.lock=threading.Lock();self.stop=threading.Event()
         self.gallery=read_json(DATA/'face-gallery.json',{})
@@ -37,6 +38,7 @@ class FaceNode(Node):
     def process(self):
         while not self.stop.wait(.22):
             with self.lock:packet=self.packet;self.packet=None
+            if not read_json(DATA/'ready.json',{}).get('ready'):continue
             if not packet or self.info is None:continue
             rgb,depth=packet;stamp=Time.from_msg(rgb.header.stamp)
             if not 0<=(self.get_clock().now()-stamp).nanoseconds/1e9<1.2:continue

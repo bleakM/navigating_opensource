@@ -15,6 +15,18 @@ from geometry_msgs.msg import TransformStamped
 
 
 class MissionTests(unittest.TestCase):
+    def test_incomplete_face_approach_lock_reobserves_then_fails_bounded(self):
+        node=FaceVoiceSearch.__new__(FaceVoiceSearch)
+        node.phase='waiting_for_raised_hand';node.approaching=True;node.locked=None
+        node.face_lock_deadline=time.monotonic()-1.;node.face_lock_retries=0
+        node.confirm_id=7;node.confirm_stamps=[1,2];node.visual_packet=object();node.scan_count=3
+        node.start_observing=Mock();node.event=Mock();node.abort=Mock()
+        self.assertTrue(node.retry_stalled_face_lock())
+        self.assertFalse(node.approaching);self.assertEqual(node.confirm_stamps,[])
+        node.start_observing.assert_called_once();node.abort.assert_not_called()
+        node.approaching=True;node.face_lock_retries=2
+        self.assertTrue(node.retry_stalled_face_lock());node.abort.assert_called_once()
+
     def test_unreachable_room_does_not_trigger_scan_or_overwrite_pending_request(self):
         node=FaceVoiceSearch.__new__(FaceVoiceSearch)
         node.identity='caller';node.done=False;node.approaching=False;node.pending_audio=None
@@ -265,6 +277,39 @@ class MissionTests(unittest.TestCase):
         node.data={};node.memory.visual_prior.return_value['age_s']=61.
         node.start_face_viewpoint.reset_mock()
         self.assertFalse(node.try_nearby_memory_view());node.start_face_viewpoint.assert_not_called()
+
+    def test_distant_fresh_body_requests_viewpoint_without_confirming_identity(self):
+        node=FaceVoiceSearch.__new__(FaceVoiceSearch)
+        node.identity='caller';node.data={};node.robot=lambda:np.zeros(2)
+        node.memory=Mock();node.memory.visual_prior.return_value={'age_s':.4,'position':[9.5,0.],
+            'identity_evidence':'body_hint','source':'two-frame OSNet + RGB-D'}
+        node.start_face_viewpoint=Mock(return_value=True);node.event=Mock();node.approaching=False
+        self.assertTrue(node.try_nearby_memory_view())
+        node.start_face_viewpoint.assert_called_once_with(max_age_s=1.2,hint_kind='body_hint',max_travel_m=9.,time_limit_s=35.)
+        self.assertFalse(node.approaching);self.assertNotIn('multimodal_confirmation',node.data)
+        self.assertEqual(node.data['remembered_view_search']['measurement_kind'],'body_hint')
+        self.assertTrue(node.data['remembered_view_search']['final_acceptance_requires_fresh_face'])
+        self.assertFalse(node.try_nearby_memory_view())  # At most one body-memory search per call.
+
+    def test_stale_or_out_of_sensor_range_body_cannot_launch_viewpoint(self):
+        node=FaceVoiceSearch.__new__(FaceVoiceSearch)
+        node.identity='caller';node.data={};node.robot=lambda:np.zeros(2)
+        node.memory=Mock();node.start_face_viewpoint=Mock();node.event=Mock()
+        for age,point in [(1.3,[4.,0.]),(.2,[10.1,0.])]:
+            node.memory.visual_prior.return_value={'age_s':age,'position':point,
+                'identity_evidence':'body_hint','source':'two-frame OSNet + RGB-D'}
+            self.assertFalse(node.try_nearby_memory_view())
+        node.start_face_viewpoint.assert_not_called()
+
+    def test_centred_visible_body_gets_viewpoint_instead_of_another_room_scan(self):
+        node=FaceVoiceSearch.__new__(FaceVoiceSearch)
+        node.confirm_caller=Mock(return_value=False);node.body_hint={'stamp':99.8,'position':[8.,0.]}
+        node.seconds=lambda:100.;node.robot=lambda:np.zeros(2);node.face_pause_until=0.
+        node.try_nearby_memory_view=Mock(return_value=True)
+        node.spin_client=Mock();node.choose_room=Mock()
+        node.tick_search_observation(0.)
+        node.try_nearby_memory_view.assert_called_once();node.spin_client.send_goal_async.assert_not_called()
+        node.choose_room.assert_not_called()
 
 
     def test_already_beside_uses_existing_stop_check_without_unnecessary_path(self):

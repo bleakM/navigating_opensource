@@ -18,7 +18,7 @@ from g1_msgs.action import StepClear
 from voice_search import VoiceSearch
 from approach_person import Approach
 from common import DATA,read_json,write_json
-from caller_memory import CallerMemory
+from caller_memory import CallerMemory,bearing_hypotheses
 from face_approach import ranked_face_approaches
 import cv2,numpy as np
 
@@ -34,11 +34,13 @@ class FaceVoiceSearch(VoiceSearch):
         scope=self.declare_parameter('memory_scope','session-'+str(time.time_ns())).value
         self.memory=CallerMemory(DATA/'caller-memory'/(str(scope).replace('/','_')+'.json'),scope)
         self.prediction=None
+        self.body_history={};self.body_hint=None
         self.pending_audio_meta={};self.room_scans={};self.room_attempts={}
         self.face_pause_until=0.
         self.face_centering=False
         self.face_view_attempts=0
         self.approach_retries=0
+        self.face_lock_retries=0;self.face_lock_deadline=0.
         self.clearance_client=ActionClient(self,StepClear,'/g1_base_approach/step_clear')
         self.clearance_attempts={}
         self.clear_clients=[self.create_client(ClearEntireCostmap,'/'+name+'/clear_entirely_'+kind+'_costmap')
@@ -49,7 +51,30 @@ class FaceVoiceSearch(VoiceSearch):
                 QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.create_subscription(String,'/wb/call',self.call,10)
         self.create_subscription(PersonTracks,'/wb/faces',self.on_people,10)
-        self.data.update(input='propagated 4ch audio / CAMPPlus / SRP-PHAT + YuNet/SFace face-only RGB-D',identity_method='face-only, no body feature or simulator actor ID')
+        self.create_subscription(PersonTracks,'/wb/bodies',self.on_bodies,10)
+        self.data.update(input='propagated 4ch audio / CAMPPlus / SRP-PHAT + YOLO/OSNet appearance hints + YuNet/SFace RGB-D',identity_method='body appearance assists search; fresh face required for final identity; no simulator actor ID')
+
+    def on_bodies(self,msg):
+        stamp=msg.header.stamp.sec+msg.header.stamp.nanosec/1e9
+        if msg.header.frame_id!='map' or not 0<=self.seconds()-stamp<=1.2:return
+        if not read_json(DATA/'ready.json',{}).get('ready'):return
+        present=set()
+        for person in msg.people:
+            if person.confidence<.68 or not 1<=person.track_id<=len(self.face_ids):continue
+            identity=self.face_ids[person.track_id-1];present.add(identity)
+            history=self.body_history.setdefault(identity,[])
+            if history and stamp-history[-1]>1.:history.clear()
+            if not history or stamp>history[-1]:history.append(stamp)
+            del history[:-4]
+            if len(history)<2 or history[-1]-history[0]<.2:continue
+            point=[person.position.x,person.position.y]
+            self.memory.observe_body(identity,point,stamp)
+            if identity==self.identity:
+                self.body_hint={'position':point,'stamp':stamp}
+                self.data.setdefault('first_body_hint',{'stamp':stamp,'position':point,
+                    'source':'two sensor frames, YOLO/OSNet/RGB-D; not final identity'})
+        for identity in list(self.body_history):
+            if identity not in present:self.body_history.pop(identity)
 
     def call(self,msg):
         row=json.loads(msg.data)
@@ -110,6 +135,7 @@ class FaceVoiceSearch(VoiceSearch):
         person=self.visual_packet.people[0]
         self.data.update(multimodal_confirmation=True,confirmed_face_identity=self.identity,confirmation_source='CAMPPlus voice gallery -> SFace face gallery; no gesture or body identity',confirmed_track_id=person.track_id)
         self.required_track=person.track_id;self.approaching=True;self.phase='waiting_for_raised_hand'
+        self.face_lock_deadline=time.monotonic()+6.
         if self.face_reacquire_until:
             self.event('same_caller_face_reacquired_after_safe_stop')
             self.face_reacquire_until=0.
@@ -122,12 +148,32 @@ class FaceVoiceSearch(VoiceSearch):
         return bool(self.visual_packet and self.visual_packet.people and len(self.face_history)>=3
             and self.face_history[-1]-self.face_history[0]>=.4 and self.seconds()-self.face_history[-1]<=1.2)
 
+    def retry_stalled_face_lock(self):
+        # The approach adapter still needs its original four fresh frames and
+        # active lifecycle servers. If those disappear after the first face
+        # check, return to observation instead of waiting here for ten minutes.
+        if (self.phase!='waiting_for_raised_hand' or not self.approaching
+                or self.locked is not None or time.monotonic()<self.face_lock_deadline):return False
+        if self.face_lock_retries>=2:
+            self.abort('fresh face approach lock unavailable after bounded reobservation; staying stopped')
+            return True
+        self.face_lock_retries+=1
+        self.approaching=False;self.confirm_id=None;self.confirm_stamps=[]
+        self.visual_packet=None;self.scan_count=0
+        self.start_observing();self.face_pause_until=time.monotonic()+1.
+        self.event('face_approach_lock_expired_reobserve_without_movement')
+        return True
+
     def face_candidate_visible(self):
         # One matching face is sufficient to PAUSE looking, never to approach.
         # Otherwise a face can cross the camera before three frames accumulate.
         if not self.visual_packet or not self.visual_packet.people:return False
         h=self.visual_packet.header.stamp;stamp=h.sec+h.nanosec/1e9
         return 0<=self.seconds()-stamp<=.7
+
+    def body_candidate_visible(self):
+        hint=getattr(self,'body_hint',None)
+        return bool(hint and 0<=self.seconds()-hint['stamp']<=.7)
 
     def event(self,text):
         if text=='gesture_confirmed':text='face_temporal_confirmation_complete'
@@ -171,10 +217,9 @@ class FaceVoiceSearch(VoiceSearch):
             'source':'recent RGB-D face measurements only','other_face_count':len(others),
             'preferred_endpoints':[list(p) for p in candidates[:3]]})
 
-    def start_face_viewpoint(self,max_age_s=15.):
-        # Re-observation is a search, not a blind final approach. The preceding
-        # visual approach has already been cancelled and acknowledged stopped.
-        # Only a recent RGB-D face measurement supplies the bounded search hint.
+    def start_face_viewpoint(self,max_age_s=15.,hint_kind='face',max_travel_m=4.,time_limit_s=18.):
+        # Search for a fresh face from a measured visual hint. Motion must have
+        # stopped before entering here; body appearance never confirms identity.
         if self.face_view_attempts>=2 or time.monotonic()-self.face_observed_wall>max_age_s:return False
         if not self.nav.server_is_ready() or self.map is None:return False
         try:robot=self.robot()
@@ -191,15 +236,16 @@ class FaceVoiceSearch(VoiceSearch):
         for goal in candidates:
             travel=float(np.linalg.norm(np.asarray(goal[:2])-robot))
             standoff=float(np.linalg.norm(np.asarray(goal[:2])-self.face_last_position))
-            if not .35<=travel<=4. or standoff<1.59:continue
+            if not .35<=travel<=max_travel_m or standoff<1.59:continue
             self.face_view_attempts+=1
             self.data.setdefault('face_view_searches',[]).append({'attempt':self.face_view_attempts,
-                'stamp':self.seconds(),'goal':list(goal),'last_measured_face':self.face_last_position.tolist(),
+                'stamp':self.seconds(),'goal':list(goal),'measured_visual_position':self.face_last_position.tolist(),
+                'measurement_kind':hint_kind,
                 'face_age_wall_s':time.monotonic()-self.face_observed_wall,
                 'max_hint_age_s':max_age_s,
-                'hint_distance_m':travel,'time_limit_wall_s':18.,
-                'source':'last RGB-D face + observed map; fresh face required for final approach'})
-            self.face_view_deadline=time.monotonic()+18
+                'hint_distance_m':travel,'time_limit_wall_s':time_limit_s,
+                'source':hint_kind+' RGB-D measurement + observed map; fresh face required for final approach'})
+            self.face_view_deadline=time.monotonic()+time_limit_s
             self.pending=self.nav.send_goal_async(NavigateToPose.Goal(pose=self.pose(goal)))
             self.phase='face_view_acceptance';self.event('bounded_nav2_face_reobservation_search');return True
         return False
@@ -270,9 +316,10 @@ class FaceVoiceSearch(VoiceSearch):
                 if room.id in self.visited:
                     scan=self.room_scans.get(room.id)
                     if not scan or self.calls[-1]['stamp']<=scan['stamp'] or attempts>=2:continue
-                choices.append((room.id not in self.visited,candidate['priority'],room))
+                choices.append((room.id not in self.visited,
+                    room.id in prediction.get('primary_room_ids',[c['id'] for c in prediction['room_candidates'][:3]]),candidate['priority'],room))
             if choices:
-                _,_,room=max(choices,key=lambda row:row[:2])
+                _,_,_,room=max(choices,key=lambda row:row[:3])
                 self.selected_room=room;self.room_id=room.id
                 self.room_attempts[room.id]=self.room_attempts.get(room.id,0)+1
                 self.pending=self.room_client.call_async(GetApproachPose.Request(target=room.id))
@@ -283,22 +330,28 @@ class FaceVoiceSearch(VoiceSearch):
         return False
 
     def try_nearby_memory_view(self):
-        # Do not exclude the robot's current room when the caller was recently
-        # seen nearby but is now occluded. One local re-observation is cheaper
-        # than leaving that room merely because its label is "current".
+        # A visible body can be identifiable farther away than its face. Visit
+        # one bounded safe viewpoint instead of repeatedly cancelling a room
+        # route for the same distant body and waiting for impossible face pixels.
         if self.data.get('remembered_view_search'):return False
         prior=self.memory.visual_prior(self.identity)
-        if not prior or prior['age_s']>60:return False
+        if not prior:return False
+        body=prior.get('identity_evidence')=='body_hint'
+        if prior['age_s']>(1.2 if body else 60.):return False
         try:robot=self.robot()
         except TransformException:return False
         point=np.asarray(prior['position'],float)
-        if float(np.linalg.norm(point-robot))>5.5:return False
+        if float(np.linalg.norm(point-robot))>(10. if body else 5.5):return False
         self.face_last_position=point;self.face_observed_wall=time.monotonic()-prior['age_s']
-        if not self.start_face_viewpoint(max_age_s=60.):return False
-        self.face_reacquire_until=time.monotonic()+24.
+        if body:
+            started=self.start_face_viewpoint(max_age_s=1.2,hint_kind='body_hint',max_travel_m=9.,time_limit_s=35.)
+        else:started=self.start_face_viewpoint(max_age_s=60.)
+        if not started:return False
+        self.face_reacquire_until=time.monotonic()+(41. if body else 24.)
         self.data['remembered_view_search']={'age_s':prior['age_s'],'position':point.tolist(),
-            'source':prior['source'],'final_acceptance_requires_fresh_face':True}
-        self.event('inspect_nearby_remembered_face_before_leaving_room');return True
+            'source':prior['source'],'measurement_kind':'body_hint' if body else 'face',
+            'final_acceptance_requires_fresh_face':True}
+        self.event('inspect_measured_body_for_face' if body else 'inspect_nearby_remembered_face_before_leaving_room');return True
 
     def refresh_prediction(self):
         if not self.calls or not self.identity:return None
@@ -311,6 +364,9 @@ class FaceVoiceSearch(VoiceSearch):
         except TransformException:robot=None
         self.prediction=self.memory.predict(self.identity,self.calls[-1],rooms,scans=self.room_scans,robot=robot)
         self.data['position_prediction']=self.prediction
+        if self.prediction['room_candidates'] and 'first_position_prediction' not in self.data:
+            import copy
+            self.data['first_position_prediction']=copy.deepcopy(self.prediction)
         return self.prediction
 
     def doorway_view(self):
@@ -552,6 +608,9 @@ class FaceVoiceSearch(VoiceSearch):
             if self.identity:self.abort('user interrupted; safe stop')
         if self.identity is None:
             self.deadline=time.monotonic()+600
+        if (self.phase=='waiting_for_raised_hand' and getattr(self,'approaching',False)
+                and self.retry_stalled_face_lock()):
+            self.publish_state();return
         if self.phase in ('clearance_acceptance','clearance_walking'):
             self.tick_clearance_recovery();self.publish_state();return
         if self.phase=='face_recovery_stop':
@@ -601,13 +660,7 @@ class FaceVoiceSearch(VoiceSearch):
                 super().on_call(self.pending_audio)
                 if len(self.calls)>before:
                     self.calls[-1].update(self.pending_audio_meta)
-                    call=self.calls[-1];rotation=call['map_azimuth']-call['array_azimuth']
-                    call['map_hypotheses']=[{'map_azimuth':call['map_azimuth'],'weight':.6,'band':'full'}]
-                    for candidate in call.get('frequency_candidates',[]):
-                        if candidate.get('peak_contrast',0)<.08:continue
-                        angle=float(candidate['azimuth_rad'])+rotation
-                        call['map_hypotheses'].append({'map_azimuth':math.atan2(math.sin(angle),math.cos(angle)),
-                            'weight':.2,'band':candidate['band_hz']})
+                    call=self.calls[-1];call['map_hypotheses']=bearing_hypotheses(call)
                     self.memory.observe_audio(self.identity,self.calls[-1]);self.refresh_prediction()
                     self.pending_audio=None
         # Record the requested heading from measured map TF before any Spin is
@@ -621,10 +674,10 @@ class FaceVoiceSearch(VoiceSearch):
                 q=t.rotation;heading=math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
             except TransformException:heading=None
             if (previous in ('turning','search_walking') and not self.face_centering and not self.cancel_requested and self.nav_handle
-                    and not self.nav_result.done() and self.face_candidate_visible()):
+                    and not self.nav_result.done() and (self.face_candidate_visible() or self.body_candidate_visible())):
                 self.cancel_future=self.nav_handle.cancel_goal_async()
                 self.scan_cancel_deadline=time.monotonic()+8;self.phase='face_scan_stop'
-                self.event('same_face_seen_stop_scan_before_approach');self.publish_state();return
+                self.event('visual_candidate_seen_stop_scan_for_face_check');self.publish_state();return
             if previous=='observing' and self.identity and not self.approaching:
                 Approach.tick(self)
                 if not self.cancel_requested and not self.done:self.tick_search_observation(heading)
@@ -648,6 +701,20 @@ class FaceVoiceSearch(VoiceSearch):
 
     def tick_search_observation(self,heading):
         if self.confirm_caller():return
+        hint=getattr(self,'body_hint',None)
+        if hint and heading is not None and 0<=self.seconds()-hint['stamp']<=1.2:
+            # A body hint only centres the camera for fresh FACE confirmation.
+            # It can never set multimodal_confirmation or a final approach goal.
+            try:
+                delta=np.asarray(hint['position'])-self.robot()
+                angle=math.remainder(math.atan2(delta[1],delta[0])-heading,2*math.pi)
+                if abs(angle)>.2 and time.monotonic()>getattr(self,'body_turn_after',0.):
+                    self.body_turn_after=time.monotonic()+4.
+                    self.turn_target_bearing=heading+angle
+                    self.pending=self.spin_client.send_goal_async(Spin.Goal(target_yaw=float(angle),time_allowance=Duration(seconds=15).to_msg()))
+                    self.phase='turn_acceptance';self.event('body_hint_centre_camera_require_face');return
+                if time.monotonic()>=self.face_pause_until and self.try_nearby_memory_view():return
+            except TransformException:pass
         dwell=time.monotonic()-self.observe_wall
         if self.face_reacquire_until:
             if dwell>=2.:self.start_face_viewpoint()

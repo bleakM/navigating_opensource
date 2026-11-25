@@ -15,6 +15,30 @@ def angle_error(point,call):
     return abs(math.atan2(math.sin(delta),math.cos(delta)))
 
 
+def bearing_hypotheses(call):
+    """Transform spectral and secondary SRP peaks at the audio capture pose.
+
+    Peaks of one recording are alternatives, never independent observations.
+    Keep a bounded share for them, including the back of a reverberant array.
+    """
+    rotation=call['map_azimuth']-call['array_azimuth']
+    bands=[{'map_azimuth':call['map_azimuth'],'weight':.6,'band':'full'}]
+    for candidate in call.get('frequency_candidates',[]):
+        if candidate.get('peak_contrast',0)<.08:continue
+        angle=float(candidate['azimuth_rad'])+rotation
+        if not math.isfinite(angle):continue
+        bands.append({'map_azimuth':math.atan2(math.sin(angle),math.cos(angle)),
+                      'weight':.12,'band':candidate.get('band_hz','spectral')})
+    for candidate in call.get('angular_candidates',[])[:3]:
+        if candidate.get('relative_score',0)<.6:continue
+        angle=float(candidate['azimuth_rad'])+rotation
+        if not math.isfinite(angle):continue
+        if any(abs(math.remainder(angle-b['map_azimuth'],2*math.pi))<math.radians(15) for b in bands):continue
+        bands.append({'map_azimuth':math.atan2(math.sin(angle),math.cos(angle)),
+                      'weight':.08,'band':'secondary SRP peak'})
+    return bands
+
+
 def arrival_portals(origin,rooms):
     """First openings along observed-room graph, not the source room's door.
 
@@ -47,7 +71,7 @@ class CallerMemory:
         saved=read_json(path,{})
         self.people=saved.get('people',{}) if saved.get('scope')==scope else {}
         for row in self.people.values():row.pop('audio_history',None)
-        self.face_stamps={};self.last_save=0.
+        self.face_stamps={};self.body_stamps={};self.last_save=0.
 
     def observe_face(self,identity,position,stamp,now=None):
         now=time.time() if now is None else now
@@ -60,6 +84,17 @@ class CallerMemory:
         # Never average a moved person with their old location.
         row['visual']={'position':p.tolist(),'stamp':float(stamp),'seen_wall':now,
             'source':'camera face ROI + aligned depth + measurement-time map TF'}
+        self.save(now);return True
+
+    def observe_body(self,identity,position,stamp,now=None):
+        now=time.time() if now is None else now
+        p=np.asarray(position,float)
+        if p.shape!=(2,) or not np.isfinite(p).all() or not math.isfinite(stamp):return False
+        row=self.people.setdefault(identity,{})
+        if now<=row.get('body',{}).get('seen_wall',-1) or stamp<=self.body_stamps.get(identity,-1):return False
+        self.body_stamps[identity]=stamp
+        row['body']={'position':p.tolist(),'stamp':float(stamp),'seen_wall':now,
+                     'source':'multi-frame OSNet body appearance + RGB-D + measurement-time map TF; hint only'}
         self.save(now);return True
 
     def observe_audio(self,identity,call,now=None):
@@ -79,12 +114,19 @@ class CallerMemory:
 
     def visual_prior(self,identity,now=None):
         now=time.time() if now is None else now
-        row=self.people.get(identity,{}).get('visual')
+        person=self.people.get(identity,{})
+        row=person.get('visual');body=person.get('body')
+        # A fresh confirmed face outranks body appearance; body observations
+        # can replace an older hint after a person actually moves.
+        use_body=bool(body and (not row or (now-row['seen_wall']>5 and body['seen_wall']>row['seen_wall'])))
+        if use_body:row=body
         if not row:return None
         age=now-row['seen_wall']
-        if not 0<=age<=120:return None
-        return {**row,'age_s':age,'search_radius_m':min(8.,.6+.15*age),
-            'weight':math.exp(-age/45.),'uncertainty':'heuristic search radius, not guaranteed position accuracy'}
+        if not 0<=age<=(45 if use_body else 120):return None
+        return {**row,'age_s':age,'identity_evidence':'body_hint' if use_body else 'face',
+            'search_radius_m':min(8.,(1. if use_body else .6)+.15*age),
+            'weight':(.55 if use_body else 1.)*math.exp(-age/(20. if use_body else 45.)),
+            'uncertainty':'heuristic search radius, not guaranteed position accuracy'}
 
     def predict(self,identity,call,rooms,now=None,scans=None,robot=None):
         """Only Canopy's observed-map outlines/doors are eligible room regions."""
@@ -119,8 +161,9 @@ class CallerMemory:
             score=.25+.75*audio_support
             bonus=0.
             if prior:
-                distance=float(np.linalg.norm(centre-prior['position']))
-                scale=prior['search_radius_m']+math.sqrt(max(room.get('area',0),0)/math.pi)
+                outline=room.get('outline',[])
+                distance=float(Polygon(outline).distance(Point(prior['position']))) if len(outline)>=3 else float(np.linalg.norm(centre-prior['position']))
+                scale=prior['search_radius_m']
                 bonus=prior['weight']*math.exp(-.5*(distance/max(scale,.5))**2)
                 score+=.65*bonus
             scan=scans.get(room['id'],{})
@@ -133,16 +176,35 @@ class CallerMemory:
             candidates.append({'id':room['id'],'score':score,'audio_angle_error_deg':math.degrees(error),
                 'audio_support':audio_support,'audio_observations':len(history),
                 'visual_support':bonus,'viewpoint_misses':misses,'travel_distance_m':travel,
+                'centroid':room['centroid'],'doorways':room.get('doorways',[]),
                 'outline':room.get('outline',[]),'area_m2':room.get('area',0)})
         total=sum(r['score'] for r in candidates)
         for row in candidates:
             row['search_weight']=.15/max(len(candidates),1)+.85*row['score']/max(total,1e-9)
             row['priority']=row['search_weight']/(1+.04*row['travel_distance_m'])
         candidates.sort(key=lambda r:r['score'],reverse=True)
+        eligible=[r for r in candidates if r['area_m2']>=3]
+        # The controller already observes its current region before leaving.
+        # A large corridor surrounding the receiver should not consume one of
+        # the three remote room slots simply because it spans many bearings.
+        # Keep the local hypothesis explicit: it has not been ruled out.
+        local=[r for r in eligible if len(r['outline'])>=3 and
+               Polygon(r['outline']).buffer(.1).covers(Point(call['origin']))]
+        local_ids={r['id'] for r in local}
+        remote=[r for r in eligible if r['id'] not in local_ids]
+        primary=remote[:3] if remote else local[:3]
+        reserve=remote[3:]
+        ambiguous=len(remote)>3 and remote[3]['score']>=remote[0]['score']*.85
         return {'identity':identity,'frame':'map','visual':prior,
             'audio':{'origin':list(call['origin']),'bearing_rad':call['map_azimuth'],
                 'half_angle_deg':call.get('half_angle_deg',30.),'range_estimated':False},
             'room_candidates':candidates,'scores_are_probabilities':False,
+            'primary_room_ids':[r['id'] for r in primary],
+            'local_region_ids':[r['id'] for r in local],
+            'local_region_policy':'inspect current region first; not excluded as a caller location',
+            'reserve_room_ids':[r['id'] for r in reserve],
+            'candidate_limit':3,'acoustically_ambiguous':ambiguous,
+            'primary_is_guaranteed':False,
             'audio_observations':len(history),
             'arrival_hypotheses':'direct / wall-transmitted bearing + first connected opening from receiver room; observed map only',
             'limitation':'Search weights are uncalibrated heuristics. Multiple rooms may be acoustically indistinguishable; no acoustic range estimate.'}

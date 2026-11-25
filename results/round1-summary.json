@@ -1,0 +1,608 @@
+{
+  "baseline": "f999e53896179ee8974228fc77af54fe27d39ae5",
+  "branch": "round1-mapping-body-search",
+  "git_at_report": "9d72d44ccffbe0a6ad7ee30707e0fe1d0c015317",
+  "clock": "wall time, normal MuJoCo physics",
+  "mapping_runs": [
+    {
+      "batch": "home-final",
+      "area_m2": 168,
+      "main_rooms": 3,
+      "passed": true,
+      "launch_to_ready_wall_s": 491.1395170688629,
+      "minutes_per_100m2": 4.872415843937131,
+      "minutes_per_room": 2.728552872604794,
+      "odom_distance_m": 92.6376252706325,
+      "reachable_known_floor_fraction": 0.9992476851851851,
+      "graph_nodes": 333,
+      "all_rooms_visited": true,
+      "saved_database": "workbench-home-1795510437439159015.db",
+      "database_MiB": 197.86328125,
+      "source_hashes": {
+        "workbench/config/canopy.yaml": "36d8c50efc473961b6584c34ca4663d6f66ed1637d1ffd013585a2fa43050c0b",
+        "workbench/config/trees/explore.xml": "d52e9ef9cb275a7e6fc218219187ff305bc70d52ebaf7609f04049f1bc8f167e",
+        "workbench/config/nav2.yaml": "e4d10548a2c0d4786c741284a8dfb06c86339859d76c20aaf92e5c9c39a5c72e",
+        "workbench/src/explore.py": "5d6e7d676c11a07df8645cbe4a3556da160939ee457044855e517a8ba6ef3026"
+      }
+    },
+    {
+      "batch": "community-final",
+      "area_m2": 200,
+      "main_rooms": 4,
+      "passed": true,
+      "launch_to_ready_wall_s": 440.2343227863312,
+      "minutes_per_100m2": 3.6686193565527594,
+      "minutes_per_room": 1.83430967827638,
+      "odom_distance_m": 71.76848382099845,
+      "reachable_known_floor_fraction": 0.9936332767402377,
+      "graph_nodes": 264,
+      "all_rooms_visited": true,
+      "saved_database": "workbench-store-community-1795511604143512019.db",
+      "database_MiB": 157.95703125,
+      "source_hashes": {
+        "workbench/config/canopy.yaml": "36d8c50efc473961b6584c34ca4663d6f66ed1637d1ffd013585a2fa43050c0b",
+        "workbench/config/trees/explore.xml": "5734e9a19cea7e6a744569d24725e4d00e1ab60ed6a3fc74e7929000a590c30f",
+        "workbench/config/nav2.yaml": "e4d10548a2c0d4786c741284a8dfb06c86339859d76c20aaf92e5c9c39a5c72e",
+        "workbench/src/explore.py": "5d6e7d676c11a07df8645cbe4a3556da160939ee457044855e517a8ba6ef3026"
+      }
+    }
+  ],
+  "limitations": [
+    "one final full physical mapping run per layout; earlier versions kept separately",
+    "two tested layouts only; not all store resources",
+    "known floor is not dense 3D surface completeness",
+    "latest household cold-start three-caller batch not fully passed; audio deadline and face reacquisition failures preserved",
+    "appearance is clothing/re-identification assistance, not validated invariant height/hair biometric identity",
+    "a successful nearby retry does not retroactively pass a failed first call"
+  ],
+  "date": "2026-11-24",
+  "status": {
+    "mapping_speed_target": "met on two physically tested layouts; one final full mapping each",
+    "appearance_hints": "implemented; 64 controlled held-out views and live body/face search exercised",
+    "community_candidates": "1e106f8 independent cold-start batch: 3/3 tasks, top1 2/3, top3 3/3; last call uses prior face memory",
+    "home_latest": "114c8a5: two initial calls succeeded, third audio request expired; isolated retry failed face recovery; nearby repeat succeeded",
+    "not_claimed": "no claim of latest-version all-positions three-caller acceptance or real-robot performance"
+  },
+  "search_batches": [
+    {
+      "source": "home-search.json",
+      "source_sha256": "003223bc0c3b6191e12aa93ac8788fc22d385f7dbe252c965b19d2c8d8e3c539",
+      "condition": "early version; second playback has no WAV fixture",
+      "git_commit": null,
+      "batch_passed": false,
+      "attempts_recorded": 2,
+      "successful_attempts": 1,
+      "cases": [
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 47.9,
+          "odom_distance_m": 9.603842323642384,
+          "final_person_separation_m": 1.811620092497562,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Adult_02",
+          "passed": false,
+          "elapsed_wall_s": null,
+          "odom_distance_m": null,
+          "final_person_separation_m": null,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": false
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 2,
+        "scorable_calls": 1,
+        "top1_hits": 1,
+        "top3_hits": 1,
+        "successful_tasks": 1,
+        "remote_scorable_calls": 1,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 1,
+        "source": "home-search-score.json",
+        "alignment_source": "deliverables/round1/home-run1/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_01",
+            "evidence": null
+          },
+          {
+            "target": "Female_Adult_02",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "community-search.json",
+      "source_sha256": "82dc4a5e35041c0de1cede79b93ab62cd15418d0770dda7639d60be9d7410c9a",
+      "condition": "old in-process body inference; second task face dropout timeout",
+      "git_commit": null,
+      "batch_passed": false,
+      "attempts_recorded": 2,
+      "successful_attempts": 1,
+      "cases": [
+        {
+          "target": "Male_Adult_03",
+          "passed": true,
+          "elapsed_wall_s": 41.49,
+          "odom_distance_m": 8.757213614968503,
+          "final_person_separation_m": 1.728416516086815,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Party_01",
+          "passed": false,
+          "elapsed_wall_s": 241.45,
+          "odom_distance_m": null,
+          "final_person_separation_m": null,
+          "failure": "240s bound exceeded; cancel requested",
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": false
+        }
+      ]
+    },
+    {
+      "source": "home-final-search.json",
+      "source_sha256": "74b1616a822b18da3221557e4f05cc423f715cf2c807714f55e518d3189dfc4c",
+      "condition": "1075a4c before independent inference",
+      "git_commit": "1075a4c9d9a081dcaa8268475031d6e0bdb004d8",
+      "batch_passed": false,
+      "attempts_recorded": 2,
+      "successful_attempts": 1,
+      "cases": [
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 41.95,
+          "odom_distance_m": 8.811470138356862,
+          "final_person_separation_m": 1.7450371768649249,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Male_Adult_03",
+          "passed": false,
+          "elapsed_wall_s": 44.82,
+          "odom_distance_m": 1.793910020731578,
+          "final_person_separation_m": null,
+          "failure": "bounded face viewpoint search timed out; staying stopped",
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 2,
+        "scorable_calls": 2,
+        "top1_hits": 1,
+        "top3_hits": 2,
+        "successful_tasks": 1,
+        "remote_scorable_calls": 2,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 2,
+        "source": "home-final-search-score.json",
+        "alignment_source": "deliverables/round1/home-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_01",
+            "evidence": null
+          },
+          {
+            "target": "Male_Adult_03",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "community-final-search.json",
+      "source_sha256": "94444105fabdfd922e98f733d198b102eb0a0bd48143a1ce8a06e669ef8d82f5",
+      "condition": "b92ac03 cold saved-map launch, three calls",
+      "git_commit": "b92ac03f817f1a99bef14daacbffc5df558c5470",
+      "batch_passed": true,
+      "attempts_recorded": 3,
+      "successful_attempts": 3,
+      "cases": [
+        {
+          "target": "Male_Adult_03",
+          "passed": true,
+          "elapsed_wall_s": 43.48,
+          "odom_distance_m": 9.492059857067382,
+          "final_person_separation_m": 1.6581720954943067,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Party_01",
+          "passed": true,
+          "elapsed_wall_s": 26.9,
+          "odom_distance_m": 4.0340569495773,
+          "final_person_separation_m": 1.667628917490396,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 136.69,
+          "odom_distance_m": 30.520642500839912,
+          "final_person_separation_m": 1.7301215393808917,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 3,
+        "scorable_calls": 3,
+        "top1_hits": 2,
+        "top3_hits": 2,
+        "successful_tasks": 3,
+        "remote_scorable_calls": 3,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 2,
+        "source": "community-final-search-score.json",
+        "alignment_source": "deliverables/round1/community-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_03",
+            "evidence": null
+          },
+          {
+            "target": "Female_Party_01",
+            "evidence": null
+          },
+          {
+            "target": "Male_Adult_01",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "community-candidates-search.json",
+      "source_sha256": "8bf6c000890851900a1db32b320f8fd35a1ec96b27aa809a930afd3017bb7669",
+      "condition": "1e106f8 cold saved-map launch; third call has prior face evidence",
+      "git_commit": "1e106f8c41319c46817cea2b81722f1f18953ac3",
+      "batch_passed": true,
+      "attempts_recorded": 3,
+      "successful_attempts": 3,
+      "cases": [
+        {
+          "target": "Male_Adult_03",
+          "passed": true,
+          "elapsed_wall_s": 39.8,
+          "odom_distance_m": 8.412751187893491,
+          "final_person_separation_m": 1.8892981820968537,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Party_01",
+          "passed": true,
+          "elapsed_wall_s": 19.7,
+          "odom_distance_m": 3.125202183547593,
+          "final_person_separation_m": 1.7819393227257816,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 55.56,
+          "odom_distance_m": 14.113868202274237,
+          "final_person_separation_m": 1.7554525520231854,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 3,
+        "scorable_calls": 3,
+        "top1_hits": 2,
+        "top3_hits": 3,
+        "successful_tasks": 3,
+        "remote_scorable_calls": 3,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 3,
+        "source": "community-candidates-search-score.json",
+        "alignment_source": "deliverables/round1/community-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_03",
+            "evidence": null
+          },
+          {
+            "target": "Female_Party_01",
+            "evidence": null
+          },
+          {
+            "target": "Male_Adult_01",
+            "evidence": "face"
+          }
+        ]
+      }
+    },
+    {
+      "source": "home-candidates-search.json",
+      "source_sha256": "e914bc544004d52cd2b4a80ddb5d671b0599b2e5162ecc282eb2b31edfa56251",
+      "condition": "5b2577f cold saved-map launch; distant-body stop loop on third task",
+      "git_commit": "5b2577f5bbef016e20d5389a94ab03e4edf1cab7",
+      "batch_passed": false,
+      "attempts_recorded": 3,
+      "successful_attempts": 2,
+      "cases": [
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 47.03,
+          "odom_distance_m": 9.057039242694877,
+          "final_person_separation_m": 1.7033516031887603,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Male_Adult_03",
+          "passed": true,
+          "elapsed_wall_s": 25.04,
+          "odom_distance_m": 3.7614579109538964,
+          "final_person_separation_m": 1.821285249700517,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Party_01",
+          "passed": false,
+          "elapsed_wall_s": 205.98,
+          "odom_distance_m": null,
+          "final_person_separation_m": null,
+          "failure": "200s bound exceeded; cancel requested",
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": false
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 3,
+        "scorable_calls": 3,
+        "top1_hits": 3,
+        "top3_hits": 3,
+        "successful_tasks": 2,
+        "remote_scorable_calls": 3,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 3,
+        "source": "home-candidates-search-score.json",
+        "alignment_source": "deliverables/round1/home-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_01",
+            "evidence": null
+          },
+          {
+            "target": "Male_Adult_03",
+            "evidence": null
+          },
+          {
+            "target": "Female_Party_01",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "home-body-view-search.json",
+      "source_sha256": "21083f8a865546fd2e32562adf55a63633798d3883304677bd521cd33ba693b8",
+      "condition": "114c8a5 cold saved-map launch; third audio inference expired before task",
+      "git_commit": "114c8a58f06f1d2978e0305681b1ad36e4d89391",
+      "batch_passed": false,
+      "attempts_recorded": 3,
+      "successful_attempts": 2,
+      "cases": [
+        {
+          "target": "Male_Adult_01",
+          "passed": true,
+          "elapsed_wall_s": 42.71,
+          "odom_distance_m": 8.594606181530486,
+          "final_person_separation_m": 1.9242802262700855,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Male_Adult_03",
+          "passed": true,
+          "elapsed_wall_s": 23.48,
+          "odom_distance_m": 3.042914951482385,
+          "final_person_separation_m": 1.7676815183660022,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        },
+        {
+          "target": "Female_Party_01",
+          "passed": false,
+          "elapsed_wall_s": 9.9,
+          "odom_distance_m": null,
+          "final_person_separation_m": null,
+          "failure": "Audio perception rejected the call",
+          "audio_rejection": {
+            "at": 1795513306.9458377,
+            "reason": "inference_too_slow",
+            "message": "声音识别完成但已过期，请稍后重新呼叫"
+          },
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": false
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 3,
+        "scorable_calls": 2,
+        "top1_hits": 2,
+        "top3_hits": 2,
+        "successful_tasks": 2,
+        "remote_scorable_calls": 2,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 2,
+        "source": "home-body-view-search-score.json",
+        "alignment_source": "deliverables/round1/home-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Male_Adult_01",
+            "evidence": null
+          },
+          {
+            "target": "Male_Adult_03",
+            "evidence": null
+          },
+          {
+            "target": "Female_Party_01",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "home-body-view-retry.json",
+      "source_sha256": "36914736ea5ae5eefe58b5661690a1538a5e1b45f268749c6b02a8a59b12ca71",
+      "condition": "114c8a5 one isolated repeat of third caller, same session after audio rejection",
+      "git_commit": "114c8a58f06f1d2978e0305681b1ad36e4d89391",
+      "batch_passed": false,
+      "attempts_recorded": 1,
+      "successful_attempts": 0,
+      "cases": [
+        {
+          "target": "Female_Party_01",
+          "passed": false,
+          "elapsed_wall_s": 113.43,
+          "odom_distance_m": 18.728886541354953,
+          "final_person_separation_m": null,
+          "failure": "bounded face viewpoint search timed out; staying stopped",
+          "audio_rejection": null,
+          "body_viewpoint_exercised": true,
+          "final_face_confirmed": true
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 1,
+        "scorable_calls": 1,
+        "top1_hits": 1,
+        "top3_hits": 1,
+        "successful_tasks": 0,
+        "remote_scorable_calls": 1,
+        "local_hypothesis_hits": 0,
+        "initial_hypothesis_hits": 1,
+        "source": "home-body-view-retry-score.json",
+        "alignment_source": "deliverables/round1/home-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Female_Party_01",
+            "evidence": null
+          }
+        ]
+      }
+    },
+    {
+      "source": "home-body-view-nearby-retry.json",
+      "source_sha256": "7ce0b06d9c131696605efbe0c2b888b37a7817590d69d9617fcf924696c17449",
+      "condition": "114c8a5 repeat from prior safely stopped nearby position; no reset or actor movement",
+      "git_commit": "114c8a58f06f1d2978e0305681b1ad36e4d89391",
+      "batch_passed": true,
+      "attempts_recorded": 1,
+      "successful_attempts": 1,
+      "cases": [
+        {
+          "target": "Female_Party_01",
+          "passed": true,
+          "elapsed_wall_s": 13.6,
+          "odom_distance_m": 2.2440525464459333,
+          "final_person_separation_m": 1.7731805199252026,
+          "failure": null,
+          "audio_rejection": null,
+          "body_viewpoint_exercised": false,
+          "final_face_confirmed": true
+        }
+      ],
+      "candidate_audit": {
+        "total_calls": 1,
+        "scorable_calls": 1,
+        "top1_hits": 0,
+        "top3_hits": 0,
+        "successful_tasks": 1,
+        "remote_scorable_calls": 0,
+        "local_hypothesis_hits": 1,
+        "initial_hypothesis_hits": 1,
+        "source": "home-body-view-nearby-retry-score.json",
+        "alignment_source": "deliverables/round1/home-final/exploration-alignment.json",
+        "prior_visual_evidence": [
+          {
+            "target": "Female_Party_01",
+            "evidence": "face"
+          }
+        ]
+      }
+    }
+  ],
+  "appearance_evaluation": {
+    "test_type": "independent asset-render appearance test, held-out yaw/distance/background; not live navigation",
+    "algorithm": "pretrained OSNet x0.25 MSMT17 + existing YOLO11n pose; no retraining",
+    "weights_sha256": "6f57607fed9f502b9efed546108132ee715df5a5b6e6932c6269bacb47f59f99",
+    "angles_deg": [
+      13.0,
+      103.0,
+      193.0,
+      283.0
+    ],
+    "distances_m": [
+      2.8,
+      4.6
+    ],
+    "total": 64,
+    "correct": 64,
+    "rejected": 0,
+    "wrong_accepted": 0,
+    "osnet_only_correct_same_pixels": 64,
+    "unknown_wrong_accepts": 0,
+    "latency_median_s": 0.10857765649961948
+  },
+  "body_online_performance": {
+    "type": "passive unique-frame observations during live saved-map physical search; camera content varies",
+    "frames": 186,
+    "median_inference_s": 0.22960202349986503,
+    "p95_inference_s": 0.36214518700035114,
+    "median_postprocessing_age_s": 0.368,
+    "stale_diagnostic_frames_over_1_2s": 0
+  },
+  "live_mission_version": "114c8a58f06f1d2978e0305681b1ad36e4d89391",
+  "release_note": "Historical source-project experiments, not rerun by this open-source export. Different revisions/batches must not be pooled.",
+  "source_summary_sha256": "10fbb554a22e849752eeeebe7fd91a7c62edb0f17fbd84298e6967a9b2c99491"
+}

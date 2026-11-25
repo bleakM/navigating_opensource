@@ -33,6 +33,8 @@ if [[ $(realpath "$DEPS") != "$PROJECT" ]]; then
     [[ ! -f $DEPS/workbench/models/$model ]] || args+=(--ro-bind "$DEPS/workbench/models/$model" "/workspace/models/$model")
   done
   [[ ! -d $DEPS/interaction/models/kws-zh ]] || args+=(--ro-bind "$DEPS/interaction/models/kws-zh" /workspace/models/kws-zh)
+  [[ ! -f $DEPS/workbench/models/osnet_x0_25_msmt17.pt ]] || args+=(--ro-bind "$DEPS/workbench/models/osnet_x0_25_msmt17.pt" /workspace/models/osnet_x0_25_msmt17.pt)
+  [[ ! -f $DEPS/interaction/models/yolo11n-pose.pt ]] || args+=(--ro-bind "$DEPS/interaction/models/yolo11n-pose.pt" /workspace/models/yolo11n-pose.pt)
 fi
 if [[ ${G1_GPU:-0} == 1 ]]; then
   args+=(--tmpfs /opt/host-nvidia --setenv LD_LIBRARY_PATH /opt/host-nvidia --setenv __GLX_VENDOR_LIBRARY_NAME nvidia)

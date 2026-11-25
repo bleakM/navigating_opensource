@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "id": "home",
+    "name": "家",
+    "area": 168,
+    "scene": "g1/scenes/g1_apartment_scene.xml",
+    "acoustic": "g1/scenes/apartment.yaml",
+    "spawn": [
+      0.0,
+      0.0
+    ]
+  },
+  "actors": []
+}

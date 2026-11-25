@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "id": "store-community",
+    "name": "社区活动中心",
+    "area": 200,
+    "scene": "examples/community/scene.xml",
+    "acoustic": "examples/community/acoustic.yaml",
+    "spawn": [
+      0.0,
+      0.0
+    ]
+  },
+  "actors": []
+}

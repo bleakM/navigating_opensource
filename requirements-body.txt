@@ -1,0 +1,5 @@
+# Optional CPU appearance pipeline for Python 3.12 / Linux x86-64.
+# Install into the prepared project venv, not the host ROS Python.
+ultralytics==8.3.221
+torch @ https://download-r2.pytorch.org/whl/cpu/torch-2.6.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=59e78aa0c690f70734e42670036d6b541930b8eabbaa18d94e090abf14cc4d91
+torchvision @ https://download-r2.pytorch.org/whl/cpu/torchvision-0.21.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=d6874431e678ba107b60a83f255c33f3755f06bad587b1b919aa514ec325dcd8

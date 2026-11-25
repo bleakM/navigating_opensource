@@ -1,0 +1,66 @@
+{
+  "layout": "Project-authored layout using Grove world builder; home adapted from frozen baseline",
+  "assets": {
+    "ph_metal_office_desk": {
+      "source": "Poly Haven",
+      "author": "Ulan Cabanilla",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/metal_office_desk",
+      "files": [
+        "mesh_0.obj",
+        "tex_0.png"
+      ]
+    },
+    "ph_potted_plant_01": {
+      "source": "Poly Haven",
+      "author": "Rico Cilliers",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/potted_plant_01",
+      "files": [
+        "mesh_0.obj",
+        "mesh_1.obj",
+        "tex_0.png",
+        "tex_1.png"
+      ]
+    },
+    "ph_school_chair_01": {
+      "source": "Poly Haven",
+      "author": "Ethan Place",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/SchoolChair_01",
+      "files": [
+        "mesh_0.obj",
+        "tex_0.png"
+      ]
+    },
+    "ph_wooden_bookshelf_worn": {
+      "source": "Poly Haven",
+      "author": "Ulan Cabanilla",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/wooden_bookshelf_worn",
+      "files": [
+        "mesh_0.obj",
+        "tex_0.png"
+      ]
+    },
+    "tex_laminate_floor": {
+      "source": "Poly Haven",
+      "author": "Charlotte Baglioni, Dario Barresi",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/laminate_floor_02",
+      "files": [
+        "diffuse.png"
+      ]
+    },
+    "tex_plaster_wall": {
+      "source": "Poly Haven",
+      "author": "Amal Kumar",
+      "license": "CC0 1.0",
+      "url": "https://polyhaven.com/a/plastered_wall",
+      "files": [
+        "diffuse.png"
+      ]
+    }
+  },
+  "grove_ref": "367e13a22043fcadff02f751ba395918ccd1e850"
+}

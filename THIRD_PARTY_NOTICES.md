@@ -13,9 +13,11 @@ Independent integration scripts and configuration: Apache-2.0 (`LICENSE`).
 | YuNet / SFace | https://github.com/opencv/opencv_zoo | MIT / Apache-2.0; license texts in `licenses/` |
 | Silero VAD | https://github.com/snakers4/silero-vad | MIT; `licenses/LICENSE-SILERO` |
 | pyroomacoustics | https://github.com/LCAV/pyroomacoustics | MIT |
+| OSNet | https://github.com/KaiyangZhou/deep-person-reid | Vendored architecture MIT; `licenses/LICENSE-OSNET`. Checkpoint downloaded separately; upstream model terms apply |
+| YOLO11n-pose / Ultralytics | https://github.com/ultralytics/ultralytics | Optional body-hint pipeline: AGPL-3.0 / Enterprise; see https://www.ultralytics.com/license . No weights redistributed |
 | Microsoft Rocketbox | https://github.com/microsoft/Microsoft-Rocketbox | MIT; avatars not included |
 | Furnished scene assets | Grove `workspace/assets/manifest.yaml` | Per-asset attribution (including Poly Haven CC0 and CC BY assets); meshes/textures not included |
 
-`examples/exhibition` is a scene description derived from the Grove scene generator; required external furniture assets retain their upstream licenses. `core/build_native.py` modifies separately fetched BSD simulator sources in an ignored build directory: actor/sensor separation and native rendering are the integration changes. Source headers and upstream notices must be retained when distributing resulting binaries.
+`examples/exhibition` and `examples/community` are scene descriptions derived from the Grove scene generator; community per-asset attribution is recorded in `examples/community/sources.json`; required external furniture assets retain their upstream licenses. `core/build_native.py` modifies separately fetched BSD simulator sources in an ignored build directory: actor/sensor separation and native rendering are the integration changes. Source headers and upstream notices must be retained when distributing resulting binaries.
 
-No YOLO model or detector is shipped: the final identity pipeline uses face-only YuNet/SFace. Older body/gesture detection experiments are outside this source release.
+The optional YOLO/OSNet pipeline proposes body appearance hints, while final identity still requires YuNet/SFace. Its code and model licenses remain applicable when enabled; the root Apache-2.0 license does not relicense Ultralytics or OSNet. Model files are not shipped. No new model training is included.

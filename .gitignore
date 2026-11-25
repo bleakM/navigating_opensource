@@ -11,6 +11,7 @@ logs/
 maps/
 assets/avatars/
 models/*.onnx
+models/*.pt
 models/kws-zh/
 __pycache__/
 *.pyc

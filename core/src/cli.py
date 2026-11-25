@@ -98,11 +98,15 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='command',required=True)
     run=subs.add_parser('run');run.add_argument('--manifest',default='examples/session.json');run.add_argument('--mode',choices=['fresh','saved'],default='fresh');run.add_argument('--database');run.add_argument('--initial-pose',default='')
     e=subs.add_parser('enroll');e.add_argument('--identity',required=True);e.add_argument('--face',required=True);e.add_argument('--voice',required=True)
+    b=subs.add_parser('enroll-body');b.add_argument('--identity',required=True);b.add_argument('--height',type=float,default=1.64)
     p=subs.add_parser('play');p.add_argument('--slot',type=int,required=True);p.add_argument('--wav')
     subs.add_parser('status');subs.add_parser('cancel')
     goal=subs.add_parser('goal');goal.add_argument('x',type=float);goal.add_argument('y',type=float)
     args=parser.parse_args()
     if args.command=='enroll':return enroll(args)
+    if args.command=='enroll-body':
+        import sys
+        return subprocess.call([sys.executable,str(ROOT/'core/src/enroll_bodies.py'),'--identity',identity(args.identity),'--height',str(args.height)])
     if args.command=='play':return play(args)
     if args.command=='status':
         print(json.dumps({k:read_json(DATA/(k+'.json'),{}) for k in ['ready','mission-state','localization','audio-perception']},ensure_ascii=False,indent=2));return
